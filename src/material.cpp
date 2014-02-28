@@ -7,4 +7,5 @@ vec3 Material::shade(const Intersection* isect, uint8_t depth) const
 	//		test for shadow if needed
 	//		call shadeLight if not in shadow
 	//		accumulate contribution
+	return vec3(1);
 }
