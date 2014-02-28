@@ -10,7 +10,7 @@ vec3 Material::shade(const Intersection* isect, uint8_t depth, const Scene &scen
 	const std::vector<std::unique_ptr<Light>>& lights = scene.lights();
 	//Pour l'accumulation de la contribution
 	vec3 total_light (0);
-	//initialisatiion de la position du shadow ray
+	//initialisatiionii de la position du shadow ray
 	vec3 position = (*isect).position;
 	
 	for (int i = 0; i < lights.size(); i++){
