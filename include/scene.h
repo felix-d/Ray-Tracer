@@ -9,7 +9,10 @@ class Scene
 {
 public:
 	Scene(const char* file);
+
+	//TRACE FUNCTION!!!!! Premiere chose a faire
 	std::unique_ptr<Intersection> trace(const Ray& ray, uint8_t depth, decimal maxdist = 1e20, decimal mindist = 1e-5) const;
+	
 
 	const mat4& cameraMatrix() const { return _cameraMatrix; }
 	decimal fov() const { return _fov; }
@@ -20,9 +23,13 @@ public:
 	const std::vector<std::unique_ptr<Light>>& lights() const { return _lights; }
 
 protected:
+	//Le vecteur contenant les formes a parcourir pour determiner si il y a intersection
 	std::vector<std::unique_ptr<Geometry>> _geometry;
+	//Le vecteur contenant les lumieres
 	std::vector<std::unique_ptr<Light>> _lights;
+	//Un mapping entre les noms des materiaux et les materiaux
 	std::unordered_map<std::string, std::unique_ptr<Material>> _materials;
+	//Wtf
 	vec3 _background;
 
 	mat4 _cameraMatrix;

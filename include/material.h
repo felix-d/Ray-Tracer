@@ -3,6 +3,7 @@
 #include <basic_structs.h>
 #include <texture.h>
 
+//FORTEMENT RECOMMANDE DE CREER UN MATERIAU EN DAMIER POUR COMMENCER (VOIR ENONCE)
 class Material
 {
 public:
