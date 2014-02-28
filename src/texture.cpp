@@ -149,4 +149,5 @@ Texture::Texture(const char* filepath)
 vec3 Texture::sample(const vec2& uv) const
 {
 	// bilinear interpolation
+	return vec3(0);
 }

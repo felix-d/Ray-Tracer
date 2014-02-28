@@ -4,6 +4,8 @@
 #include <texture.h>
 
 //FORTEMENT RECOMMANDE DE CREER UN MATERIAU EN DAMIER POUR COMMENCER (VOIR ENONCE)
+//PAR DEFAUT, LA TEXTURE EST INSTANCIEE A NULL PTR SI ON NE LUI PASSE PAS DE FICHIER TGA
+
 class Material
 {
 public:
@@ -12,7 +14,7 @@ public:
 	// shade takes care of the broad rendering process.
 	// It should call shadeLight (if the light is visible!) for each light for better modularity.
 	//DONC SHADE EST LA FONCTION QUI APPELLE TOUS LES SHADELIGHT
-	virtual vec3 shade(const Intersection* isect, uint8_t depth) const;
+	virtual vec3 shade(const Intersection* isect, uint8_t depth, const Scene& scene) const;
 protected:
 	virtual vec3 shadeLight(const Intersection* isect, const Light* l, uint8_t depth) const;
 	std::unique_ptr<Texture> _texture;

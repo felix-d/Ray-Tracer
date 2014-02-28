@@ -1,5 +1,1 @@
-LES 3 PREMIERES ETAPES
-
--faire un materiau uv (dans la classe parente Material, pas besoin de creer une sous classe, cest le materiau par defaut)
--faire la fonction TRACE
--faire fonctionner cette merde avec une sphere
+-Surtout faire le materiau DEFAULT uv qui utilise la classe parente (pas besoin de faire de classe enfant) 
