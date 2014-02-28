@@ -14,6 +14,9 @@ public:
 	virtual std::unique_ptr<struct Intersection> intersect(const struct Ray& ray, decimal &currentdepth) const abstract;
 
 protected:
+	vec3 _position;
+	vec3 _orientation;
+	vec3 _scaling;
 	Material* _material;
 
 	// Transform order: scaling, then rotation, then translation (use glm methods)
@@ -29,6 +32,10 @@ public:
 	//const after a function declaration means that the function is not allowed to 
 	//change any class members(except ones that are marked mutable)
 	virtual std::unique_ptr<struct Intersection> intersect(const struct Ray& ray, decimal &currentdepth) const override;
+protected:
+	float _radius;
+	vec3 _center;
+	
 };
 
 class Box : public Geometry

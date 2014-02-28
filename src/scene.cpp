@@ -94,7 +94,8 @@ Scene::Scene(const char* file)
 				else if (mat_data == "Index=")
 					iss >> ior;
 			}
-
+			//Il est important de remarquer que _materiels est une map qui map les noms des textures a un materiel
+			//Si il n'y a aucune texture, alors la texture sera egale a nullptr (voir material.cpp)
 			if (mattype == "Lambert")
 				_materials[matname] = std::unique_ptr<Material>(new MaterialLambert(color, texture, tiling));
 			else if (mattype == "BlinnPhong")
