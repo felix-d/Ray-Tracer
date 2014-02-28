@@ -1,7 +1,7 @@
 #include <geom.h>
 #include <basic_structs.h>
 #include <glm/gtx/euler_angles.hpp>
-
+//Jai juste tout ecrit ce qui a dans le header, jai fait les constructeurs etc..
 Geometry::Geometry(vec3 position, vec3 orientation, vec3 scaling, Material* mtl)
 :_position(position),
 _orientation(orientation),

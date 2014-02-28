@@ -173,12 +173,10 @@ std::unique_ptr<Intersection> Scene::trace(const Ray& ray, uint8_t depth, decima
 	if (depth == 0) return nullptr;
 	decimal min_distance = maxdist;
 	std::unique_ptr<Intersection> nearest_intersection;
-	for (int i = 0; i < _geometry.size; i++){
-		auto geom = *_geometry.at(i);
-		std::unique_ptr<Intersection> current_intersection = geom.intersect(ray, min_distance);
+	for (unsigned int i = 0; i < _geometry.size(); i++){
+		std::unique_ptr<Intersection> current_intersection = (*_geometry.at(i)).intersect(ray, min_distance);
 		decimal current_distance = glm::length((*current_intersection).position - (*current_intersection).ray.origin);
 		if (current_distance < mindist) nearest_intersection = std::move(current_intersection);
-		
 	}
 	return std::move(nearest_intersection);
 	//	early exit if depth == 0
