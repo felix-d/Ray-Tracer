@@ -10,7 +10,7 @@ _material(mtl)
 {}
 
 Sphere::Sphere(vec3 position, vec3 orientation, vec3 scaling, Material* mtl)
-:Geometry(position,orientation,scaling,mtl){
+:Geometry(position, orientation, scaling, mtl){
     //TODO implementer constructeur Sphere
     //L'equation de la sphere est donnee par (X-C).(X-C)=r^2
     //C est est le centre et r est le rayon

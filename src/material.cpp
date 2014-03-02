@@ -10,7 +10,7 @@ vec3 Material::shade(const Intersection* isect, uint8_t depth) const
 	const std::vector<std::unique_ptr<Light>>& lights = (*(*isect).scene).lights();
 	//Pour l'accumulation de la contribution
 	vec3 total_light (0);
-	//initialisatiionii de la position du shadow ray
+	//initialisation de la position du shadow ray
 	vec3 position = (*isect).position;
 	
 	for (int i = 0; i < lights.size(); i++){
@@ -34,3 +34,32 @@ vec3 Material::shadeLight(const Intersection* isect, const Light* l, uint8_t dep
 	return vec3(1);
 }
 
+
+vec3 MaterialLambert::shadeLight(const Intersection* isect, const Light* l, uint8_t depth) const{
+	return vec3(1);
+}
+
+
+vec3 MaterialBlinnPhong::shadeLight(const Intersection* isect, const Light* l, uint8_t depth) const{
+	return vec3(1);
+}
+
+
+vec3 MaterialCombined::shade(const Intersection* isect, uint8_t depth) const{
+	return vec3(1);
+}
+
+
+vec3 MaterialCombined::shadeLight(const Intersection* isect, const Light* l, uint8_t depth) const{
+	return vec3(1);
+}
+
+
+vec3 MaterialReflective::shade(const Intersection* isect, uint8_t depth) const{
+	return vec3(1);
+}
+
+
+vec3 MaterialRefractive::shade(const Intersection* isect, uint8_t depth) const{
+	return vec3(1);
+}
