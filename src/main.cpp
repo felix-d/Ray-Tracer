@@ -22,7 +22,7 @@ int main(int argc, const char* argv[])
 	/////////////////////////////////
 
 	std::string outfilename = "image.ppm";
-	std::string infilename = "scene.scn";
+	std::string infilename = "../../scenes/phong.scn";
 
 	uint width = 1024;
 	uint height = 768;
