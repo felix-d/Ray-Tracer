@@ -1,5 +1,6 @@
 #include <material.h>
 #include <scene.h>
+#include <iostream>
 
 vec3 Material::shade(const Intersection* isect, uint8_t depth) const {
 	//	for all lights
@@ -31,14 +32,16 @@ vec3 Material::shade(const Intersection* isect, uint8_t depth) const {
 
 vec3 Material::shadeLight(const Intersection* isect, const Light* l, uint8_t depth) const {
 	// facteur d'echelle pour le damier
-	float s = 1.0f;
+	float s = 0.5f;
 	float u = isect->uv.x;
+	//std::cout << "u is" << u << std::endl;
 	float v = isect->uv.y;
+	//std::cout << "v is" << v << std::endl;
 	vec3 color;
 
 	if (static_cast<int>(floorf(s * u) + floorf(s * v)) % 2 == 1)
-		color = glm::vec3(1.0f);
-	else color = glm::vec3(0.0f);
+		color = glm::vec3(0.0f);
+	else color = glm::vec3(1.0f);
 
 	return color;
 }

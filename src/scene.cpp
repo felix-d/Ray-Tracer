@@ -175,9 +175,9 @@ std::unique_ptr<Intersection> Scene::trace(const Ray& ray, uint8_t depth, decima
 	decimal min_dist = maxdist;
 	std::unique_ptr<Intersection> nearest_isect;
 	for (uint i = 0; i < _geometry.size(); i++){
-		std::unique_ptr<Intersection> current_isect = (*_geometry.at(i)).intersect(ray, min_dist);
+		std::unique_ptr<Intersection> current_isect = _geometry.at(i)->intersect(ray, min_dist);
 		if (current_isect != nullptr){
-			decimal current_dist = glm::length((*current_isect).position - (*current_isect).ray.origin);
+			decimal current_dist = glm::length(current_isect->position - current_isect->ray.origin);
 			if (current_dist < min_dist) {
 				nearest_isect = std::move(current_isect);
 				nearest_isect->scene = this;
