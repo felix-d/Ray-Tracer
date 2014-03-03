@@ -51,7 +51,6 @@ std::unique_ptr<struct Intersection> Sphere::intersect(const struct Ray& ray, de
 	float v = acosf(z / _radius) / glm::pi<float>();
 	vec2 uv = glm::vec2(u, v);
 	
-
 	std::unique_ptr<struct Intersection> isect(new Intersection{ ray, position, normal, uv, _material });
 	return std::move(isect);
 

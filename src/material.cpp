@@ -9,7 +9,7 @@ vec3 Material::shade(const Intersection* isect, uint8_t depth) const {
 	//		accumulate contribution
 	const std::vector<std::unique_ptr<Light>>& lights = isect->scene->lights();
 	//Pour l'accumulation de la contribution
-	vec3 total_light (0);
+	vec3 total_light (0.0f);
 	//initialisation de la position du shadow ray
 	vec3 position = isect->position;
 	
@@ -44,7 +44,8 @@ vec3 Material::shadeLight(const Intersection* isect, const Light* l, uint8_t dep
 
 	if ((int)(floorf(scale * u) + floorf(scale * v)) % 2 == 1)
 		color = glm::vec3(0.0f);
-	else color = glm::vec3(1.0f);
+	else
+		color = glm::vec3(1.0f);
 
 	return color;
 }
