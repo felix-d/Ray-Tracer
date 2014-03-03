@@ -93,7 +93,7 @@ int main(int argc, const char* argv[])
 	uint image_pos = 0;
 	float invWidth = 1 / float(width), invHeight = 1 / float(height);
 	float aspectratio = width / float(height);
-	float angle = tan(glm::pi<float>() * 0.5 * scene.fov / float(180));
+	float angle = tan(glm::pi<float>() * 0.5 * (float)scene.fov() / float(180));
 
 	////////////////////////////
 	// Step 3: Perform render //
