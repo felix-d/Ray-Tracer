@@ -24,7 +24,7 @@ std::unique_ptr<struct Intersection> Sphere::intersect(const struct Ray& ray, de
    
 	vec3 m = ray.origin - _center;
 	float b = glm::dot(m, ray.direction);
-	float c = glm::dot(m, m) - _radius*_radius;
+	float c = glm::dot(m, m) - _radius * _radius;
 	if (c > 0.0f && b > 0.0f)
 		return nullptr;
 	float discr = b * b - c;
@@ -41,6 +41,9 @@ std::unique_ptr<struct Intersection> Sphere::intersect(const struct Ray& ray, de
 	float x = position.x;
 	float y = position.y;
 	float z = position.z;
+
+	//float v = acosf(z / _radius) / glm::pi<float>();
+	//float u = acosf(x / (_radius * sinf(glm::pi<float>() * v))) / (2.0f * glm::pi<float>());
 
 	float u;
 	if (y > 0)

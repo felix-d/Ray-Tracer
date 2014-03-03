@@ -34,7 +34,7 @@ vec3 Material::shade(const Intersection* isect, uint8_t depth) const {
 
 
 vec3 Material::shadeLight(const Intersection* isect, const Light* l, uint8_t depth) const {
-	// facteur d'echelle pour le damier
+	/*// facteur d'echelle pour le damier
 	float scale = 0.5f;
 	float u = isect->uv.x;
 	//std::cout << "u is" << u << std::endl;
@@ -45,8 +45,8 @@ vec3 Material::shadeLight(const Intersection* isect, const Light* l, uint8_t dep
 	if ((int)(floorf(scale * u) + floorf(scale * v)) % 2 == 1)
 		color = glm::vec3(0.0f);
 	else
-		color = glm::vec3(1.0f);
-
+		color = glm::vec3(1.0f);*/
+	vec3 color = glm::vec3(1.0f, 0.5f, 0.7f);
 	return color;
 }
 
