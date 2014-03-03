@@ -82,9 +82,28 @@ int main(int argc, const char* argv[])
 	// Step 2: Initialize render data //
 	////////////////////////////////////
 
+	uint8_t max_depth = scene.maxDepth();
+	vec3 origin = glm::vec3(0.0f);
+	vec3 direction = glm::vec3(1.0f);
+	decimal maxdist = 1;
+	decimal mindist = 1;
+	// compteur indiquant la position a laquelle on est rendu dans le vecteur image
+	uint image_pos = 0;
+
 	////////////////////////////
 	// Step 3: Perform render //
 	////////////////////////////
+
+	for (uint x_pixel = 0; x_pixel < width; x_pixel++) {
+		for (uint y_pixel = 0; y_pixel < width; y_pixel++) {
+			Ray ray = Ray{ origin, direction };
+			std::unique_ptr<Intersection> isect = scene.trace(ray, max_depth, maxdist, mindist);
+			if (isect == nullptr)
+				image[image_pos] = scene.background();
+			//else
+				//image[image_pos] = isect->material->shade(const_cast<const Intersection*>(isect), max_depth);
+		}
+	}
 
 	//	loop over pixels
 	//		loop over subpixels
