@@ -22,7 +22,7 @@ int main(int argc, const char* argv[])
 	/////////////////////////////////
 
 	std::string outfilename = "image.ppm";
-	std::string infilename = "../../scenes/phong.scn";
+	std::string infilename = "../../scenes/uv.scn";
 
 	uint width = 1024;
 	uint height = 768;
@@ -84,55 +84,46 @@ int main(int argc, const char* argv[])
 	// Le max_depth est la profondeur de recursion maximale
 	uint8_t max_depth = scene.maxDepth();
 	// Le vecteur origin doit representer l'oeil de la camera
-	vec4 origin4 = scene.cameraMatrix() * glm::vec4(0.0f, 0, 0, 1);
+	vec4 origin_homog = scene.cameraMatrix() * glm::vec4(0.0f, 0, 0, 1);
 	// compteur indiquant la position a laquelle on est rendu dans le vecteur image
 	uint image_pos = 0;
-	float invWidth = 1.0f /(float)width, invHeight = 1.0f / (float)height;
-	float aspectratio = width / height;
+	decimal invWidth = 1 /(decimal)width, invHeight = 1 / (decimal)height;
+	decimal aspectratio = (decimal) width / (decimal)height;
 	//on obtient ainsi le multplicateur pour le field of view
-	float angle = tan(scene.fov()/2);
-	std::cout << "angle is " << angle << std::endl;
+	decimal angle = tan(scene.fov()/2);
+	
 	////////////////////////////
 	// Step 3: Perform render //
 	////////////////////////////
 
 	//VOIR http://www.scratchapixel.com/lessons/3d-basic-lessons/lesson-6-rays-cameras-and-images/building-primary-rays-and-rendering-an-image/
     
-	for (uint x_pixel = 0; x_pixel < width; x_pixel++) {
-		for (uint y_pixel = 0; y_pixel < height; y_pixel++) {
+	for (uint y_pixel = 0; y_pixel < height; y_pixel++) {
+		for (uint x_pixel = 0; x_pixel < width; x_pixel++) {
+
 			//mapping des pixels pour les normaliser dans un range [-1,1]
 			//Remarquons le offset de 0.5, pour etre au milieu du pixel
 			//il faut multiplier les x par le ratio pour redonner aux pixels
 			//leur forme carre
-			//On multiplie aussi par tan(
-			
-			
-			
-			float xx = (2.0f * ((x_pixel + 0.5f) * invWidth) - 1.0f) * angle * aspectratio;
-			float yy = (1.0f - 2.0f * ((y_pixel + 0.5f) * invHeight)) * angle;
+			//On multiplie aussi par le multiplicateur pour le fov
+			decimal xx = (2 * ((x_pixel + 0.5) * invWidth) - 1) * angle * aspectratio;
+			decimal yy = (1 - 2 * ((y_pixel + 0.5) * invHeight)) * angle;
 			
 			//transformation du point sur le plan image en coordonnes homogenes
-			vec4 p4 = vec4{ xx, yy, -1, 1 };
+			vec4 p_homog = vec4{ xx, yy, -1, 1 };
 			//multiplication par la camera to world matrix
-			p4 = scene.cameraMatrix() * p4;
+			p_homog = scene.cameraMatrix() * p_homog;
 			//dehomogeneisation 
-			vec3 origin = vec3(origin4);
-			vec3 p = vec3(p4);
-			//std::cout << " le point est " << p.x << " " <<p.y << " " <<p.z << " " << std::endl;
+			vec3 origin = vec3(origin_homog);
+			vec3 p = vec3(p_homog);
 			vec3 direction = glm::normalize(p - origin);
-			Ray ray = Ray{ origin, direction};
-			std::unique_ptr<Intersection> isect = scene.trace(ray, max_depth );
+			Ray ray = Ray{ origin, direction };
+			std::unique_ptr<Intersection> isect = scene.trace(ray, max_depth);
 			if (isect == nullptr)
 				image[image_pos] = scene.background();
-			else{
-				image[image_pos] = vec3(1, 1, 1);
-				//else
+			else image[image_pos] = vec3(1, 1, 1);
 				//image[image_pos] = isect->material->shade(const_cast<const Intersection*>(isect), max_depth);
-				
-			}
-			//std::cout << "image pos " << image_pos << std::endl;
 			image_pos++;
-			
 		}
 	}
 
@@ -151,6 +142,8 @@ int main(int argc, const char* argv[])
 		outfile << " " << discrete(image[i].r * sample_norm, scene.discretization()) << " " << discrete(image[i].g * sample_norm, scene.discretization()) << " " << discrete(image[i].b * sample_norm, scene.discretization()) << std::endl;
 
 	std::cout << "Wrote file '" << outfilename << "'." << std::endl;
+	std::string quit;
+	std::cin >> quit;
 
 	return 0;
 }
