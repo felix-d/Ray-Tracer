@@ -93,8 +93,9 @@ int main(int argc, const char* argv[])
 	uint image_pos = 0;
 	float invWidth = 1 / float(width), invHeight = 1 / float(height);
 	float aspectratio = width / float(height);
-	float angle = tan(glm::pi<float>() * 0.5 * (float)scene.fov() / float(180));
-
+	std::cout << "fov is " << scene.fov() << std::endl;
+	float angle = tan(scene.fov());
+	std::cout << "angle is " << angle << std::endl;
 	////////////////////////////
 	// Step 3: Perform render //
 	////////////////////////////
@@ -104,6 +105,7 @@ int main(int argc, const char* argv[])
 			
 			float xx = (2 * ((x_pixel + 0.5) * invWidth) - 1) * angle * aspectratio;
 			float yy = (1 - 2 * ((y_pixel + 0.5) * invHeight)) * angle;
+			std::cout << "analysed pixel is " << x_pixel << " " << y_pixel << std::endl;
 			Ray ray = Ray{ origin, vec3(xx,yy,-1)};
 			std::unique_ptr<Intersection> isect = scene.trace(ray, max_depth );
 			if (isect == nullptr)

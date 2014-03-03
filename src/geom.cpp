@@ -1,6 +1,7 @@
 #include <geom.h>
 #include <basic_structs.h>
 #include <glm/gtx/euler_angles.hpp>
+#include <iostream>
 //Jai juste tout ecrit ce qui a dans le header, jai fait les constructeurs etc..
 Geometry::Geometry(vec3 position, vec3 orientation, vec3 scaling, Material* mtl)
 :_position(position),
@@ -16,11 +17,12 @@ Sphere::Sphere(vec3 position, vec3 orientation, vec3 scaling, Material* mtl)
     //C est est le centre et r est le rayon
 	_radius = 1.0f * (float)scaling.x;
 	_center = position;
+	
 }
 
 std::unique_ptr<struct Intersection> Sphere::intersect(const struct Ray& ray, decimal &currentdepth) const{
    
-
+	
 	vec3 m = ray.origin - _center;
 	double b = glm::dot(m, ray.direction);
 	double c = glm::dot(m, m) - _radius*_radius;
