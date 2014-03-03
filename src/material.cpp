@@ -13,7 +13,7 @@ vec3 Material::shade(const Intersection* isect, uint8_t depth) const
 	//initialisation de la position du shadow ray
 	vec3 position = (*isect).position;
 	
-	for (int i = 0; i < lights.size(); i++){
+	for (uint i = 0; i < lights.size(); i++){
 		
 		bool inShadow;
 

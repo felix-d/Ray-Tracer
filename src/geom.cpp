@@ -31,28 +31,13 @@ std::unique_ptr<struct Intersection> Sphere::intersect(const struct Ray& ray, de
 	if (t < 0.0f) t = 0.0f;
 	vec3 q = ray.origin + t*ray.direction;
 	vec3 normal = glm::normalize(q - _center);
+
+	// Calcul des coordonees uv
+
 	
-	/*Salut Félix,
 
-		Tu peux faire beaucoup plus simple.Construis ton objet Intersection
-		dans geom.cpp, retourne - le(sans le pointeur vers la scène), puis,
-		dans Scene::trace, tu peux juste faire isect->scene = this; avant de
-		retourner isect.
-
-		Ça simplifie pas mal les choses!
-
-		Jean - Philippe
-
-		2014 - 02 - 28 10:32 GMT - 05 : 00 felix d <felix.descoteaux@hotmail.com> :
-	> J'ai de la difficulte a comprendre comment on passe le pointeur vers la
-	> scene au struct Intersection que lon doit retourner dans la definition de la
-	> fonction intersect dans geom.cpp.
-	> Doit on rajouter un pointeur vers la scene dans le constructeur de geometry ?
-	> (Un peu comme le material ? )
-	>
-	> Merci!*/
-	//std::unique_ptr<Intersection> intersection = Intersection { ray, q, normal, vec2(0), _material, NULL };
-	return NULL;
+	std::unique_ptr<struct Intersection> isect(new Intersection{ ray, q, normal, vec2(0), _material });
+	return std::move(isect);
 
 }
 
