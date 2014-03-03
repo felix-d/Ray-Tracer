@@ -29,14 +29,25 @@ std::unique_ptr<struct Intersection> Sphere::intersect(const struct Ray& ray, de
 	if (discr < 0.0f) return 0;
 	double t = -b - sqrt(discr);
 	if (t < 0.0f) t = 0.0f;
-	vec3 q = ray.origin + t*ray.direction;
-	vec3 normal = glm::normalize(q - _center);
+	vec3 position = ray.origin + t*ray.direction;
+	vec3 normal = glm::normalize(position - _center);
 
 	// Calcul des coordonees uv
+	double x = (double)position.x;
+	double y = (double)position.y;
+	double z = (double)position.z;
 
+	double u;
+	if (y > 0)
+		u = acos(x / sqrt(pow(x, 2) + pow(y, 2))) / (2 * glm::pi<double>());
+	else
+		u = 1 - acos(x / sqrt(pow(x, 2) + pow(y, 2))) / (2 * glm::pi<double>());
+
+	double v = acos(z / (double)_radius) / glm::pi<double>();
+	vec2 uv = glm::vec2((float)u, (float)v);
 	
 
-	std::unique_ptr<struct Intersection> isect(new Intersection{ ray, q, normal, vec2(0), _material });
+	std::unique_ptr<struct Intersection> isect(new Intersection{ ray, position, normal, uv, _material });
 	return std::move(isect);
 
 }
