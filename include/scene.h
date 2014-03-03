@@ -29,9 +29,9 @@ protected:
 	std::vector<std::unique_ptr<Light>> _lights;
 	//Un mapping entre les noms des materiaux et les materiaux
 	std::unordered_map<std::string, std::unique_ptr<Material>> _materials;
-	//Wtf
+	//background color
 	vec3 _background;
-
+	//La camera matrix est linverse du glm::lookAt(eye,center,up), definie par le fichier de scene
 	mat4 _cameraMatrix;
 	decimal _fov;
 

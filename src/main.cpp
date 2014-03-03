@@ -81,23 +81,31 @@ int main(int argc, const char* argv[])
 	////////////////////////////////////
 	// Step 2: Initialize render data //
 	////////////////////////////////////
-
+	// Le max_depth est la profondeur de recursion maximale
 	uint8_t max_depth = scene.maxDepth();
+	// Le vecteur origin doit representer l'oeil de la camera
 	vec3 origin = glm::vec3(0.0f);
-	vec3 direction = glm::vec3(1.0f);
-	decimal maxdist = 1;
-	decimal mindist = 1;
+	//Le vecteur direction doit etre le pixel par rapport a loeil!
+	vec3 direction = glm::normalize(glm::vec3(1.0f));
+
+
 	// compteur indiquant la position a laquelle on est rendu dans le vecteur image
 	uint image_pos = 0;
+	float invWidth = 1 / float(width), invHeight = 1 / float(height);
+	float aspectratio = width / float(height);
+	float angle = tan(glm::pi<float>() * 0.5 * scene.fov / float(180));
 
 	////////////////////////////
 	// Step 3: Perform render //
 	////////////////////////////
-
+    
 	for (uint x_pixel = 0; x_pixel < width; x_pixel++) {
 		for (uint y_pixel = 0; y_pixel < width; y_pixel++) {
-			Ray ray = Ray{ origin, direction };
-			std::unique_ptr<Intersection> isect = scene.trace(ray, max_depth, maxdist, mindist);
+			
+			float xx = (2 * ((x_pixel + 0.5) * invWidth) - 1) * angle * aspectratio;
+			float yy = (1 - 2 * ((y_pixel + 0.5) * invHeight)) * angle;
+			Ray ray = Ray{ origin, vec3(xx,yy,-1)};
+			std::unique_ptr<Intersection> isect = scene.trace(ray, max_depth );
 			if (isect == nullptr)
 				image[image_pos] = scene.background();
 			//else
