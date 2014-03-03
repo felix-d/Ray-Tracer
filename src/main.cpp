@@ -121,8 +121,8 @@ int main(int argc, const char* argv[])
 			std::unique_ptr<Intersection> isect = scene.trace(ray, max_depth);
 			if (isect == nullptr)
 				image[image_pos] = scene.background();
-			else image[image_pos] = vec3(1, 1, 1);
-				//image[image_pos] = isect->material->shade(const_cast<const Intersection*>(isect), max_depth);
+			else 
+				image[image_pos] = isect->material->shade(isect.get(), max_depth);
 			image_pos++;
 		}
 	}

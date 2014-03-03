@@ -24,31 +24,36 @@ std::unique_ptr<struct Intersection> Sphere::intersect(const struct Ray& ray, de
    
 	vec3 m = ray.origin - _center;
 	float b = glm::dot(m, ray.direction);
-	float c = glm::dot(m, m) - _radius*_radius;
-	if (c>0.0f && b>0.0f) return nullptr;
-	float discr = b*b - c;
-	if (discr < 0.0f) return nullptr;
+	float c = glm::dot(m, m) - _radius * _radius;
+	if (c > 0.0f && b > 0.0f)
+		return nullptr;
+	float discr = b * b - c;
+	if (discr < 0.0f)
+		return nullptr;
 	float t = -b - sqrt(discr);
-	if (t < 0.0f) t = 0.0f;
+	if (t < 0.0f)
+		t = 0.0f;
 	vec3 position = ray.origin + (double)t * ray.direction;
 	//std::cout << "intersection at " << position.x << " " << position.y << " " << position.z << std::endl;
 	vec3 normal = glm::normalize(position - _center);
 
 	// Calcul des coordonees uv
-	double x = (double)position.x;
-	double y = (double)position.y;
-	double z = (double)position.z;
+	float x = position.x;
+	float y = position.y;
+	float z = position.z;
 
-	double u;
+	//float v = acosf(z / _radius) / glm::pi<float>();
+	//float u = acosf(x / (_radius * sinf(glm::pi<float>() * v))) / (2.0f * glm::pi<float>());
+
+	float u;
 	if (y > 0)
-		u = acos(x / sqrt(pow(x, 2) + pow(y, 2))) / (2 * glm::pi<double>());
+		u = acosf(x / sqrtf(powf(x, 2.0f) + powf(y, 2.0f))) / (2.0f * glm::pi<float>());
 	else
-		u = 1 - acos(x / sqrt(pow(x, 2) + pow(y, 2))) / (2 * glm::pi<double>());
+		u = 1 - acosf(x / sqrtf(powf(x, 2.0f) + powf(y, 2.0f))) / (2.0f * glm::pi<float>());
 
-	double v = acos(z / (double)_radius) / glm::pi<double>();
-	vec2 uv = glm::vec2((float)u, (float)v);
+	float v = acosf(z / _radius) / glm::pi<float>();
+	vec2 uv = glm::vec2(u, v);
 	
-
 	std::unique_ptr<struct Intersection> isect(new Intersection{ ray, position, normal, uv, _material });
 	return std::move(isect);
 
