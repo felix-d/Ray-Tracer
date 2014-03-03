@@ -84,34 +84,55 @@ int main(int argc, const char* argv[])
 	// Le max_depth est la profondeur de recursion maximale
 	uint8_t max_depth = scene.maxDepth();
 	// Le vecteur origin doit representer l'oeil de la camera
-	vec3 origin = glm::vec3(0.0f);
-	//Le vecteur direction doit etre le pixel par rapport a loeil!
-	vec3 direction = glm::normalize(glm::vec3(1.0f));
-
-
+	vec4 origin4 = scene.cameraMatrix() * glm::vec4(0.0f, 0, 0, 1);
 	// compteur indiquant la position a laquelle on est rendu dans le vecteur image
 	uint image_pos = 0;
-	float invWidth = 1 / float(width), invHeight = 1 / float(height);
-	float aspectratio = width / float(height);
-	std::cout << "fov is " << scene.fov() << std::endl;
-	float angle = tan(scene.fov());
+	float invWidth = 1.0f /(float)width, invHeight = 1.0f / (float)height;
+	float aspectratio = width / height;
+	//on obtient ainsi le multplicateur pour le field of view
+	float angle = tan(scene.fov()/2);
 	std::cout << "angle is " << angle << std::endl;
 	////////////////////////////
 	// Step 3: Perform render //
 	////////////////////////////
+
+	//VOIR http://www.scratchapixel.com/lessons/3d-basic-lessons/lesson-6-rays-cameras-and-images/building-primary-rays-and-rendering-an-image/
     
 	for (uint x_pixel = 0; x_pixel < width; x_pixel++) {
-		for (uint y_pixel = 0; y_pixel < width; y_pixel++) {
+		for (uint y_pixel = 0; y_pixel < height; y_pixel++) {
+			//mapping des pixels pour les normaliser dans un range [-1,1]
+			//Remarquons le offset de 0.5, pour etre au milieu du pixel
+			//il faut multiplier les x par le ratio pour redonner aux pixels
+			//leur forme carre
+			//On multiplie aussi par tan(
 			
-			float xx = (2 * ((x_pixel + 0.5) * invWidth) - 1) * angle * aspectratio;
-			float yy = (1 - 2 * ((y_pixel + 0.5) * invHeight)) * angle;
-			std::cout << "analysed pixel is " << x_pixel << " " << y_pixel << std::endl;
-			Ray ray = Ray{ origin, vec3(xx,yy,-1)};
+			
+			
+			float xx = (2.0f * ((x_pixel + 0.5f) * invWidth) - 1.0f) * angle * aspectratio;
+			float yy = (1.0f - 2.0f * ((y_pixel + 0.5f) * invHeight)) * angle;
+			
+			//transformation du point sur le plan image en coordonnes homogenes
+			vec4 p4 = vec4{ xx, yy, -1, 1 };
+			//multiplication par la camera to world matrix
+			p4 = scene.cameraMatrix() * p4;
+			//dehomogeneisation 
+			vec3 origin = vec3(origin4);
+			vec3 p = vec3(p4);
+			//std::cout << " le point est " << p.x << " " <<p.y << " " <<p.z << " " << std::endl;
+			vec3 direction = glm::normalize(p - origin);
+			Ray ray = Ray{ origin, direction};
 			std::unique_ptr<Intersection> isect = scene.trace(ray, max_depth );
 			if (isect == nullptr)
 				image[image_pos] = scene.background();
-			//else
+			else{
+				image[image_pos] = vec3(1, 1, 1);
+				//else
 				//image[image_pos] = isect->material->shade(const_cast<const Intersection*>(isect), max_depth);
+				
+			}
+			//std::cout << "image pos " << image_pos << std::endl;
+			image_pos++;
+			
 		}
 	}
 
@@ -124,7 +145,6 @@ int main(int argc, const char* argv[])
 	//			add color to subpixel
 
 	decimal sample_norm = 1.0 / (samples * samples);
-
 	std::ofstream outfile(outfilename);
 	outfile << "P3" << std::endl << width << " " << height << std::endl << 255 << std::endl;
 	for (uint i = 0; i < width * height; i++)

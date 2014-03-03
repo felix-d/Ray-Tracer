@@ -135,6 +135,7 @@ Scene::Scene(const char* file)
 		{
 			vec3 eye, center, up;
 			iss >> eye >> center >> up >> _fov;
+			//converti en rad
 			_fov *= pi() / 180.0;
 
 			_cameraMatrix = inverse(glm::lookAt(eye, center, up));

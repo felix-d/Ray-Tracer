@@ -15,23 +15,23 @@ Sphere::Sphere(vec3 position, vec3 orientation, vec3 scaling, Material* mtl)
     //TODO implementer constructeur Sphere
     //L'equation de la sphere est donnee par (X-C).(X-C)=r^2
     //C est est le centre et r est le rayon
-	_radius = 1.0f * (float)scaling.x;
+	_radius = 1.0f;
 	_center = position;
 	
 }
 
 std::unique_ptr<struct Intersection> Sphere::intersect(const struct Ray& ray, decimal &currentdepth) const{
    
-	
 	vec3 m = ray.origin - _center;
-	double b = glm::dot(m, ray.direction);
-	double c = glm::dot(m, m) - _radius*_radius;
-	if (c > 0.0f && b > 0.0f) return 0;
-	double discr = b*b - c;
-	if (discr < 0.0f) return 0;
-	double t = -b - sqrt(discr);
+	float b = glm::dot(m, ray.direction);
+	float c = glm::dot(m, m) - _radius*_radius;
+	if (c>0.0f && b>0.0f) return nullptr;
+	float discr = b*b - c;
+	if (discr < 0.0f) return nullptr;
+	float t = -b - sqrt(discr);
 	if (t < 0.0f) t = 0.0f;
-	vec3 position = ray.origin + t*ray.direction;
+	vec3 position = ray.origin + (double)t * ray.direction;
+	//std::cout << "intersection at " << position.x << " " << position.y << " " << position.z << std::endl;
 	vec3 normal = glm::normalize(position - _center);
 
 	// Calcul des coordonees uv
