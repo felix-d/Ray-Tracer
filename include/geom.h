@@ -2,7 +2,9 @@
 #include <main.h>
 #include <material.h>
 #include <array>
+#include "../vs12/rtbase/utils.h"
 
+int plane_Intersection(const Ray& ray, vec3 normal, vec3 point, double &t);
 class Geometry
 {
 public:
@@ -13,7 +15,7 @@ public:
 	// Passing currentdepth (the linear distance between the ray's origin and the previous closest object)
 	// lets us do just that. Moreover, the & lets us update that value straight in the intersect method.
 	virtual std::unique_ptr<struct Intersection> intersect(const struct Ray& ray, decimal &currentdepth) const abstract;
-
+	
 protected:
 	vec3 _position;
 	vec3 _orientation;
@@ -76,6 +78,7 @@ protected:
 	vec3 _q;
 	decimal _radius;
 	decimal _height;
+;
 };
 
 class Cone : public Geometry
@@ -84,4 +87,13 @@ public:
 	Cone(vec3 position, vec3 orientation, vec3 scaling, Material* mtl = new Material());
 
 	virtual std::unique_ptr<struct Intersection> intersect(const struct Ray& ray, decimal &currentdepth) const override;
+protected:
+	vec3 _base_center;
+	vec3 _apex;
+	vec3 _direction;
+	decimal _theta;
+	decimal _radius;
+	decimal _height;
+	
 };
+

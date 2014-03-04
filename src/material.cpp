@@ -31,6 +31,7 @@ vec3 Material::shade(const Intersection* isect, uint8_t depth) const {
 			total_light += this->shadeLight(isect, lights[i].get(), depth);
 			
 			
+			
 	}
 	return total_light;
 	
@@ -49,6 +50,7 @@ vec3 Material::shadeLight(const Intersection* isect, const Light* l, uint8_t dep
 	}
 	else
 		color = vec3(0.0f);
+	//return vec3(1, 1, 1);
 	return color;
 }
 
