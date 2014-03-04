@@ -16,8 +16,9 @@ _material(mtl)
 	mat4 scaling_mat = glm::scale(mat4(), scaling);
 	mat4 orientation_mat = glm::orientate4(orientation);
 	_modelTransform ={
-		scaling_mat*
-		translation_mat
+		
+		translation_mat*
+		scaling_mat
 	};
 	
 	
@@ -166,6 +167,7 @@ std::unique_ptr<struct Intersection> Box::intersect(const struct Ray& ray, decim
 			return false;
 	}
 	vec3 ray_isect = ray.origin + ray.direction* (decimal)maxS;
+	//calcul de la normale
 	decimal min_face_dist = INFINITY;
 	uint index;
 	for (uint i = 0; i < _faces_points.size(); i++){
@@ -182,13 +184,12 @@ std::unique_ptr<struct Intersection> Box::intersect(const struct Ray& ray, decim
 
 Cylinder::Cylinder(vec3 position, vec3 orientation, vec3 scaling, Material* mtl)
 :Geometry(position, orientation, scaling, mtl){
-	_center = vec3(0,0,0);
-	_p = vec3(0.0,1,0);
-	_q = vec3(0.0, -1, 0);
-	_height = 2;
-	_radius = 1;
-	mY0 = -1;
-	mY1 = 1;
+	_center = vec3(_modelTransform*vec4(0.0,0,0,1));
+	_p = vec3(_modelTransform*vec4(0.0, 1, 0,1));
+	_q = vec3(_modelTransform*vec4(0.0, -1, 0, 1));
+	_height = scaling.y*2;
+	_radius = 1*scaling.x;
+
 	
 	//TODO implementer constructeur cylindre
 }
@@ -231,12 +232,12 @@ https://code.google.com/p/pwsraytracer/source/browse/trunk/raytracer/cylinder.cp
 		if (t > epsilon<double>())
 		{
 			double y = oy + t * dy;
-			if (y > mY0 && y < mY1)
+			if (y > _q.y && y < _p.y)
 			{
 				ttemp = t;
 				if (ttemp < tmin) tmin = ttemp;
 				//attention au calcul de la normal, il va falloir changer le y
-				normal = vec3(((ox + dx*t) * (1 / _radius)), 0, ((oz + dz*t) * (1 / _radius)));
+				normal = normalize(vec3(((ox + dx*t) * (1 / _radius)), 0, ((oz + dz*t) * (1 / _radius))));
 			}
 		}
 		
@@ -244,19 +245,16 @@ https://code.google.com/p/pwsraytracer/source/browse/trunk/raytracer/cylinder.cp
 		if (t >  epsilon<double>())
 		{
 			double y = oy + t * dy;
-			if (y > mY0 && y < mY1)
+			if (y > _q.y && y < _p.y)
 			{
 				ttemp = t;
 				if (ttemp < tmin){
 					tmin = ttemp;
 					//attention au calcul de la normal, il va falloir changer le y
-					normal = vec3(((ox + dx*t) * (1 / _radius)), 0, ((oz + dz*t) * (1 / _radius)));
+					normal = normalize(vec3(((ox + dx*t) * (1 / _radius)), 0, ((oz + dz*t) * (1 / _radius))));
 				}
 			}
 		}
-		
-		
-		
 	}
 	//Collision avec le haut
 	

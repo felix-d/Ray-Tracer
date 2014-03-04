@@ -74,8 +74,6 @@ protected:
 	vec3 _center;
 	vec3 _p;
 	vec3 _q;
-	decimal mY0;
-	decimal mY1;
 	decimal _radius;
 	decimal _height;
 };
