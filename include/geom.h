@@ -4,6 +4,7 @@
 #include <array>
 #include "../vs12/rtbase/utils.h"
 
+int plane_Intersection(const Ray& ray, vec3 normal, vec3 point, double &t);
 class Geometry
 {
 public:

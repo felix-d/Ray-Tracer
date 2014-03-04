@@ -3,18 +3,7 @@
 #include <glm/gtx/euler_angles.hpp>
 #include <iostream>
 #include <array>
-int plane_Intersection(const Ray& ray, vec3 normal, vec3 point, double &t){
-	double d = 0 - (dot(normal, point));
-	double temp = (dot(normal, ray.direction));
-	if (temp == 0){
-		return 0;
-	}
-	t = (-d - (dot(normal, ray.origin))) / temp;
-	if (t < 0.0000001)
-		return 0;
-	return 1;
 
-}
 //https://code.google.com/p/pwsraytracer/source/browse/trunk/raytracer/
 //Jai juste tout ecrit ce qui a dans le header, jai fait les constructeurs etc..
 Geometry::Geometry(vec3 position, vec3 orientation, vec3 scaling, Material* mtl)
@@ -29,6 +18,7 @@ _material(mtl)
 	mat4 orientation_mat = glm::orientate4(orientation);
 	_modelTransform ={
 		translation_mat*
+		orientation_mat*
 		scaling_mat
 	};
 	
@@ -204,9 +194,10 @@ https://code.google.com/p/pwsraytracer/source/browse/trunk/raytracer/cylinder.cp
 	//ce qui se passe cest que le rayon touche a linterieur le fond, ensuite, avec le bias sur la normale, 
 	//il reussi quand mm a pogner la lumiere
 	double tmin = INFINITY;
+	double t = DBL_MAX, t1 = DBL_MAX, t2 = DBL_MAX, t3 = DBL_MAX;
 	vec3 normal;
 	double ttemp = 0;
-	double t;
+	
 	double ox = ray.origin.x - _center.x;
 	double oy = ray.origin.y - _center.y;
 	double oz = ray.origin.z - _center.z;
@@ -229,30 +220,31 @@ https://code.google.com/p/pwsraytracer/source/browse/trunk/raytracer/cylinder.cp
 	{
 		double sqrtD = sqrt(D);
 		double aa = a * 2;
-		double t = (-b - sqrtD) / aa;
+		double t1 = (-b - sqrtD) / aa;
 
-		if (t > epsilon<double>())
+		if (t1 > epsilon<double>())
 		{
-			double y = oy + t * dy;
+			double y = oy + t1 * dy;
 			if (y > _q.y && y < _p.y)
 			{
-				ttemp = t;
-				if (ttemp < tmin) tmin = ttemp;
-				//WARNING
-				//attention au calcul de la normal, il va falloir changer le y
-				normal = normalize(vec3(((ox + dx*t) * (1 / _radius)), 0, ((oz + dz*t) * (1 / _radius))));
+				
+				if (t1 < tmin) {
+					t = t1;
+					//WARNING
+					//attention au calcul de la normal, il va falloir changer le y
+					normal = normalize(vec3(((ox + dx*t) * (1 / _radius)), 0, ((oz + dz*t) * (1 / _radius))));
+				}
 			}
 		}
-		
-		t = (-b + sqrtD) / aa;
-		if (t >  epsilon<double>())
+		t2 = (-b + sqrtD) / aa;
+		if (t2 >  epsilon<double>())
 		{
-			double y = oy + t * dy;
+			double y = oy + t2 * dy;
 			if (y > _q.y && y < _p.y)
 			{
-				ttemp = t;
-				if (ttemp < tmin){
-					tmin = ttemp;
+				
+				if (t2 < t){
+					t = t2;
 					//WARNING
 					//attention au calcul de la normal, il va falloir changer le y
 					normal = normalize(vec3(((ox + dx*t) * (1 / _radius)), 0, ((oz + dz*t) * (1 / _radius))));
@@ -260,35 +252,23 @@ https://code.google.com/p/pwsraytracer/source/browse/trunk/raytracer/cylinder.cp
 			}
 		}
 	}
-	//Collision avec le haut
-	vec3 n = vec3(0.0, -1, 0);
-	float denom =dot(n, ray.direction);
-	if (denom > 1e-6) {
-		vec3 p0l0 = _p - ray.origin;
-		t = dot(p0l0, n) / denom;
-		
-		if (t >= 0){
-			vec3 p = ray.origin + ray.direction * t;
-			vec3 v = p - _p;
-			float d2 = dot(v, v);
-			if (sqrtf(d2) <= _radius) {
-				ttemp = t;
-				if (ttemp < tmin){
-					
-					tmin = ttemp;
-					//WARNING
-					//attention au calcul de la normal, il va falloir changer le y
-					normal = -n;
-				}
+	if (plane_Intersection(ray, vec3(0, -1, 0), _p, t3)) { /* intersects plane */
+		vec3 intersection = ray.origin + (ray.direction*t3);
+		if (pow(intersection.x - _p.x, 2) + pow(intersection.z - _p.z, 2) <= _radius*_radius) { /* intersects Cone */
+			if (t3 < t){
+				t = t3;
+				normal = vec3(0, 1, 0);
 			}
 		}
 	}
-	if (ttemp != 0){
-		t = tmin;
+
+	if (t != DBL_MAX && t>0.00000001){
 		vec3 ray_isect = ray.origin + ray.direction*(decimal)t;
 		std::unique_ptr<struct Intersection> isect(new Intersection{ ray, ray_isect, normal, vec2(0), _material });
 		return std::move(isect);
 	}
+
+
 	return nullptr;
 }
 
@@ -321,12 +301,7 @@ inline bool Quadratic(float A, float B, float C, float *t0,
 }
 std::unique_ptr<struct Intersection> Cone::intersect(const struct Ray& ray, decimal &currentdepth) const{
     //https://github.com/Penetra/CG-Project/blob/master/Cone.cpp
-	//collision avec le bas.
 
-	decimal t = DBL_MAX;
-	float ttemp=0;
-	float tmin = INFINITY;
-	//vec3 normal = vec3(0,0,0);
 	double rh = -(_radius*_radius) / (_height*_height);
 	double a = pow(ray.direction.x, 2) + pow(ray.direction.z, 2) + rh*pow(ray.direction.y, 2);
 	double b = 2 * (ray.direction.x*(ray.origin.x - _base_center.x) + ray.direction.z*(ray.origin.z - _base_center.z) + rh*ray.direction.y*(ray.origin.y - _base_center.y - _height));
@@ -334,12 +309,13 @@ std::unique_ptr<struct Intersection> Cone::intersect(const struct Ray& ray, deci
 	double root = b*b - 4.0*a*c;
 	if (root<0)
 		return nullptr;
-	double t1 = DBL_MAX, t2 = DBL_MAX;
+	double t = DBL_MAX, t1 = DBL_MAX, t2 = DBL_MAX, t3 = DBL_MAX;
 	t1 = (-b + sqrtf(root)) / (2.0*a);
 	t2 = (-b - sqrtf(root)) / (2.0*a);
 
 	vec3 intersection = (ray.origin) + ((ray.direction) * t1);
 	vec3 intersection2 = ray.origin + ((ray.direction) *t2);
+
 	if (intersection.y <= _apex.y && intersection.y >= _base_center.y) {
 		if (intersection2.y <= _apex.y && intersection2.y >= _base_center.y) {
 			if (t1<t2 && t1>0 && t2 >0)
@@ -361,13 +337,10 @@ std::unique_ptr<struct Intersection> Cone::intersect(const struct Ray& ray, deci
 		}
 	}
 	
-	tmin = t;
-	
-	double t3 = DBL_MAX;
 
-	if (plane_Intersection(ray, vec3(0,-1,0), _base_center, t3)) { /* intersects plane */
+	if (plane_Intersection(ray, vec3(0,-1,0), _base_center, t3)) {
 		intersection = ray.origin + (ray.direction*t3);
-		if (pow(intersection.x - _base_center.x, 2) + pow(intersection.z - _base_center.z, 2) <= _radius*_radius) { /* intersects Cone */
+		if (pow(intersection.x - _base_center.x, 2) + pow(intersection.z - _base_center.z, 2) <= _radius*_radius) {
 			if (t3<t)
 				t = t3;
 		}
@@ -379,9 +352,17 @@ std::unique_ptr<struct Intersection> Cone::intersect(const struct Ray& ray, deci
 		std::unique_ptr<struct Intersection> isect(new Intersection{ ray, ray_isect, normal, vec2(0), _material });
 		return std::move(isect);
 	}
-
-	
 	return nullptr;
-	
 }
 
+int plane_Intersection(const Ray& ray, vec3 normal, vec3 point, double &t){
+	double d = 0 - (dot(normal, point));
+	double temp = (dot(normal, ray.direction));
+	if (temp == 0){
+		return 0;
+	}
+	t = (-d - (dot(normal, ray.origin))) / temp;
+	if (t < 0.0000001)
+		return 0;
+	return 1;
+}
