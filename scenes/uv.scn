@@ -6,7 +6,7 @@ Material Default "uv"
 #Cone (2, 0, 2) (0, 180, 0) (0.75) "uv"
 Cylinder (2, 0, 0) (0, 0, 0) (0.75) "uv"
 
-Light Directional NoShadows (4) (-1, 4, 0)
+Light Directional NoShadows (4) (20, 1, 0)
 
 Background (0.4)
 

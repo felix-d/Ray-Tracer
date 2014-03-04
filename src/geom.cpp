@@ -3,6 +3,7 @@
 #include <glm/gtx/euler_angles.hpp>
 #include <iostream>
 #include <array>
+//https://code.google.com/p/pwsraytracer/source/browse/trunk/raytracer/
 //Jai juste tout ecrit ce qui a dans le header, jai fait les constructeurs etc..
 Geometry::Geometry(vec3 position, vec3 orientation, vec3 scaling, Material* mtl)
 :_position(position),
@@ -195,7 +196,13 @@ Cylinder::Cylinder(vec3 position, vec3 orientation, vec3 scaling, Material* mtl)
 std::unique_ptr<struct Intersection> Cylinder::intersect(const struct Ray& ray, decimal &currentdepth) const{
 
 https://code.google.com/p/pwsraytracer/source/browse/trunk/raytracer/cylinder.cpp?r=160
+
+	//ps cest normal que la lumiere du cylindre soit fuckee, pcq il faut le fermer.
+	//ce qui se passe cest que le rayon touche a linterieur le fond, ensuite, avec le bias sur la normale, 
+	//il reussi quand mm a pogner la lumiere
 	double tmin = INFINITY;
+	vec3 normal;
+	double ttemp = 0;
 	double t;
 	double ox = ray.origin.x - _center.x;
 	double oy = ray.origin.y - _center.y;
@@ -226,26 +233,35 @@ https://code.google.com/p/pwsraytracer/source/browse/trunk/raytracer/cylinder.cp
 			double y = oy + t * dy;
 			if (y > mY0 && y < mY1)
 			{
-				
-				 vec3 ray_isect = ray.origin + ray.direction*(decimal)t;
-				 std::unique_ptr<struct Intersection> isect(new Intersection{ ray, ray_isect, vec3(0), vec2(0), _material });
-				 return std::move(isect);
-				
+				ttemp = t;
+				if (ttemp < tmin) tmin = ttemp;
+				//attention au calcul de la normal, il va falloir changer le y
+				normal = vec3(((ox + dx*t) * (1 / _radius)), 0, ((oz + dz*t) * (1 / _radius)));
+
 			}
 		}
-
+		
 		t = (-b + sqrtD) / aa;
 		if (t >  epsilon<double>())
 		{
 			double y = oy + t * dy;
 			if (y > mY0 && y < mY1)
 			{
-				
-				vec3 ray_isect = ray.origin + ray.direction*(decimal)t;
-				std::unique_ptr<struct Intersection> isect(new Intersection{ ray, ray_isect, vec3(0), vec2(0), _material });
-				return std::move(isect);
+				ttemp = t;
+				if (ttemp < tmin){
+					tmin = ttemp;
+					//attention au calcul de la normal, il va falloir changer le y
+					normal = vec3(((ox + dx*t) * (1 / _radius)), 0, ((oz + dz*t) * (1 / _radius)));
+				}
 			}
 		}
+	}
+	if (ttemp != 0){
+		t = tmin;
+		//vec3 normal = vec3(((ox + dx*t) * (1 / _radius)), 0, ((oz + dz*t) * (1 / _radius)));
+		vec3 ray_isect = ray.origin + ray.direction*(decimal)t;
+		std::unique_ptr<struct Intersection> isect(new Intersection{ ray, ray_isect, normal, vec2(0), _material });
+		return std::move(isect);
 	}
 	return nullptr;
 }
