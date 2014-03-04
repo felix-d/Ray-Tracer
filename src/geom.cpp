@@ -237,7 +237,6 @@ https://code.google.com/p/pwsraytracer/source/browse/trunk/raytracer/cylinder.cp
 				if (ttemp < tmin) tmin = ttemp;
 				//attention au calcul de la normal, il va falloir changer le y
 				normal = vec3(((ox + dx*t) * (1 / _radius)), 0, ((oz + dz*t) * (1 / _radius)));
-
 			}
 		}
 		
@@ -255,14 +254,44 @@ https://code.google.com/p/pwsraytracer/source/browse/trunk/raytracer/cylinder.cp
 				}
 			}
 		}
+		
+		
+		
+	}
+	//Collision avec le haut
+	
+	vec3 n = vec3(0.0, -1, 0);
+	float denom =dot(n, ray.direction);
+	//std::cout << denom << std::endl;
+	if (denom > 1e-6) {
+		//std::cout << "in" << std::endl;
+		vec3 p0l0 = _p - ray.origin;
+		t = dot(p0l0, n) / denom;
+		
+		if (t >= 0){
+			//std::cout << "in" << std::endl;
+			vec3 p = ray.origin + ray.direction * t;
+			vec3 v = p - _p;
+			float d2 = dot(v, v);
+			//std::cout << sqrtf(d2) << std::endl;
+			if (sqrtf(d2) <= _radius) {
+				ttemp = t;
+				if (ttemp < tmin){
+					
+					tmin = ttemp;
+					//attention au calcul de la normal, il va falloir changer le y
+					normal = -n;
+				}
+			}
+		}
 	}
 	if (ttemp != 0){
 		t = tmin;
-		//vec3 normal = vec3(((ox + dx*t) * (1 / _radius)), 0, ((oz + dz*t) * (1 / _radius)));
 		vec3 ray_isect = ray.origin + ray.direction*(decimal)t;
 		std::unique_ptr<struct Intersection> isect(new Intersection{ ray, ray_isect, normal, vec2(0), _material });
 		return std::move(isect);
 	}
+	//std::cout << "null";
 	return nullptr;
 }
 
