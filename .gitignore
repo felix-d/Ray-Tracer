@@ -1,7 +1,8 @@
 S junk files
 [Tt]humbs.db
 *.DS_Store
-
+*.ppm
+*.scn
 #Visual Studio files
 *.[Oo]bj
 *.user
