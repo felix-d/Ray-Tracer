@@ -59,7 +59,7 @@ protected:
 	void SetNormals();
 	void SetExtents();
 	void SetAABB();
-	std::vector<vec3>_faces;
+	std::vector<vec3>_faces_points;
 	
 
 };
@@ -70,6 +70,14 @@ public:
 	Cylinder(vec3 position, vec3 orientation, vec3 scaling, Material* mtl = new Material());
 
 	virtual std::unique_ptr<struct Intersection> intersect(const struct Ray& ray, decimal &currentdepth) const override;
+protected:
+	vec3 _center;
+	vec3 _p;
+	vec3 _q;
+	decimal mY0;
+	decimal mY1;
+	decimal _radius;
+	decimal _height;
 };
 
 class Cone : public Geometry

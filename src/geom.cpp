@@ -1,4 +1,4 @@
-#include <geom.h>
+﻿#include <geom.h>
 #include <basic_structs.h>
 #include <glm/gtx/euler_angles.hpp>
 #include <iostream>
@@ -74,13 +74,6 @@ std::unique_ptr<struct Intersection> Sphere::intersect(const struct Ray& ray, de
 
 Box::Box(vec3 position, vec3 orientation, vec3 scaling, Material* mtl)
 :Geometry(position, orientation, scaling, mtl){
-	//position = vec3(0);
-	//La transformation est appliquee dans la fonction de collision
-	
-	/*vec4 center4 = vec4(0.0f, 0.0f, 0.0f, 1.0f);
-	center4 = _modelTransform * center4;
-	_center = vec3(center4);*/
-
 
 	vec3 corner_ftr{ 1, 1, 1 };//0
 	vec3 corner_rbl{-1, -1, -1 };//1
@@ -101,18 +94,17 @@ Box::Box(vec3 position, vec3 orientation, vec3 scaling, Material* mtl)
 	SetNormals();
 	SetExtents();
 
-	_faces.push_back(vec3(1.0f, 0.0f, 0.0f));
-	_faces.push_back(vec3(0.0f, 1.0f, 0.0f));
-	_faces.push_back(vec3(0.0f, 0.0f, 1.0f));
-	_faces.push_back(vec3(-1.0f, 0.0f, 0.0f));
-	_faces.push_back(vec3(0.0f, -1.0f, 0.0f));
-	_faces.push_back(vec3(0.0f, 0.0f, -1.0f));
+	_faces_points.push_back(vec3(1.0f, 0.0f, 0.0f));
+	_faces_points.push_back(vec3(0.0f, 1.0f, 0.0f));
+	_faces_points.push_back(vec3(0.0f, 0.0f, 1.0f));
+	_faces_points.push_back(vec3(-1.0f, 0.0f, 0.0f));
+	_faces_points.push_back(vec3(0.0f, -1.0f, 0.0f));
+	_faces_points.push_back(vec3(0.0f, 0.0f, -1.0f));
 
-	
-	for (uint i = 0; i < _faces.size(); i++){
-		vec4 current = vec4(_faces[i], 1.0f);
+	for (uint i = 0; i < _faces_points.size(); i++){
+		vec4 current = vec4(_faces_points[i], 1.0f);
 		current =  _modelTransform*current;
-		_faces[i] = vec3(current);
+		_faces_points[i] = vec3(current);
 	}
 	
 }
@@ -146,75 +138,116 @@ std::unique_ptr<struct Intersection> Box::intersect(const struct Ray& ray, decim
 	float maxS = -FLT_MAX;
 	float minT = FLT_MAX;
 
-	// compute difference vector
+
 	vec3 diff = _center - ray.origin;
 
-	// for each axis do
-	for (int i = 0; i < 3; ++i)
-	{
-		// get axis i
+	for (int i = 0; i < 3; ++i){
 		vec3 axis = u[i];
-
-		// project relative vector onto axis
 		float et = dot(axis,diff);
 		float f = dot(ray.direction,axis);
-
-		// ray is parallel to plane
-		if (f==0)
-		{
-			// ray passes by box
+		if (f==0){
 			if (-et - e[i] > 0.0f || -et + e[i] > 0.0f)
 				return false;
 			continue;
 		}
-
 		float s = (et - e[i]) / f;
 		float t = (et + e[i]) / f;
-
-		// fix order
-		if (s > t)
-		{
+		if (s > t){
 			float temp = s;
 			s = t;
 			t = temp;
 		}
-
-		// adjust min and max values
 		if (s > maxS)
 			maxS = s;
 		if (t < minT)
 			minT = t;
-
-		// check for intersection failure
 		if (minT < 0.0f || maxS > minT)
 			return false;
 	}
-
-	// done, have intersection
 	vec3 ray_isect = ray.origin + ray.direction* (decimal)maxS;
-	std::cout << _center.x << "," << _center.y << "," << _center.z << std::endl;
 	decimal min_face_dist = INFINITY;
 	uint index;
-	for (uint i = 0; i < _faces.size(); i++){
-		decimal curr_face_dist = length(_faces[i] - ray_isect);
+	for (uint i = 0; i < _faces_points.size(); i++){
+		decimal curr_face_dist = length(_faces_points[i] - ray_isect);
 		if (curr_face_dist < min_face_dist){
 			min_face_dist = curr_face_dist;
 			index = i;
 		}
 	}
-	vec3 normal = normalize(_faces[index] - _center);
+	vec3 normal = normalize(_faces_points[index] - _center);
 	std::unique_ptr<struct Intersection> isect(new Intersection{ ray, ray_isect, normal, vec2(0), _material });
 	return std::move(isect);
-	}
+}
 
 Cylinder::Cylinder(vec3 position, vec3 orientation, vec3 scaling, Material* mtl)
 :Geometry(position, orientation, scaling, mtl){
+	_center = vec3(0,0,0);
+	_p = vec3(0.0,1,0);
+	_q = vec3(0.0, -1, 0);
+	_height = 2;
+	_radius = 1;
+	mY0 = -1;
+	mY1 = 1;
+	
 	//TODO implementer constructeur cylindre
 }
 
 std::unique_ptr<struct Intersection> Cylinder::intersect(const struct Ray& ray, decimal &currentdepth) const{
-	//TODO implementer intersection entre cylindre et rayon.
-	return NULL;
+
+https://code.google.com/p/pwsraytracer/source/browse/trunk/raytracer/cylinder.cpp?r=160
+	double tmin = INFINITY;
+	double t;
+	double ox = ray.origin.x - _center.x;
+	double oy = ray.origin.y - _center.y;
+	double oz = ray.origin.z - _center.z;
+
+	double dx = ray.direction.x;
+	double dy = ray.direction.y;
+	double dz = ray.direction.z;
+
+	double a = dx * dx + dz * dz;
+	double b = 2.0 * (ox * dx + oz * dz);
+	double c = ox * ox + oz * oz - _radius * _radius;
+	double D = b * b - 4.0 * a * c;
+
+	if (D < 0.0)
+	{
+		//No hitpoints
+		return nullptr;
+	}
+	else
+	{
+		double sqrtD = sqrt(D);
+		double aa = a * 2;
+		double t = (-b - sqrtD) / aa;
+
+		if (t > epsilon<double>())
+		{
+			double y = oy + t * dy;
+			if (y > mY0 && y < mY1)
+			{
+				
+				 vec3 ray_isect = ray.origin + ray.direction*(decimal)t;
+				 std::unique_ptr<struct Intersection> isect(new Intersection{ ray, ray_isect, vec3(0), vec2(0), _material });
+				 return std::move(isect);
+				
+			}
+		}
+
+		t = (-b + sqrtD) / aa;
+		if (t >  epsilon<double>())
+		{
+			double y = oy + t * dy;
+			if (y > mY0 && y < mY1)
+			{
+				
+				vec3 ray_isect = ray.origin + ray.direction*(decimal)t;
+				std::unique_ptr<struct Intersection> isect(new Intersection{ ray, ray_isect, vec3(0), vec2(0), _material });
+				return std::move(isect);
+			}
+		}
+	}
+	return nullptr;
 }
 
 Cone::Cone(vec3 position, vec3 orientation, vec3 scaling, Material* mtl)
