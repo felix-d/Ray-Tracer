@@ -26,6 +26,7 @@
     <ClInclude Include="..\..\include\material.h" />
     <ClInclude Include="..\..\include\scene.h" />
     <ClInclude Include="..\..\include\texture.h" />
+    <ClInclude Include="utils.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{252A3F6F-811C-4F2C-B2CF-43C93DF2CCD1}</ProjectGuid>

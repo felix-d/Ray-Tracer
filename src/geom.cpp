@@ -3,7 +3,18 @@
 #include <glm/gtx/euler_angles.hpp>
 #include <iostream>
 #include <array>
+int plane_Intersection(const Ray& ray, vec3 normal, vec3 point, double &t){
+	double d = 0 - (dot(normal, point));
+	double temp = (dot(normal, ray.direction));
+	if (temp == 0){
+		return 0;
+	}
+	t = (-d - (dot(normal, ray.origin))) / temp;
+	if (t < 0.0000001)
+		return 0;
+	return 1;
 
+}
 //https://code.google.com/p/pwsraytracer/source/browse/trunk/raytracer/
 //Jai juste tout ecrit ce qui a dans le header, jai fait les constructeurs etc..
 Geometry::Geometry(vec3 position, vec3 orientation, vec3 scaling, Material* mtl)
@@ -354,7 +365,7 @@ std::unique_ptr<struct Intersection> Cone::intersect(const struct Ray& ray, deci
 	
 	double t3 = DBL_MAX;
 
-	if (planeIntersection(ray, vec3(0,-1,0), _base_center, t3)) { /* intersects plane */
+	if (plane_Intersection(ray, vec3(0,-1,0), _base_center, t3)) { /* intersects plane */
 		intersection = ray.origin + (ray.direction*t3);
 		if (pow(intersection.x - _base_center.x, 2) + pow(intersection.z - _base_center.z, 2) <= _radius*_radius) { /* intersects Cone */
 			if (t3<t)
