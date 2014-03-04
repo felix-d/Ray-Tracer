@@ -1,6 +1,7 @@
 #pragma once
 #include <main.h>
 #include <material.h>
+#include <array>
 
 class Geometry
 {
@@ -49,6 +50,15 @@ protected:
 	vec3 _min;
 	vec3 _max;
 	vec3 _center;
+	std::array<vec3, 8> points;
+	std::array<vec3, 8> init_points;
+	std::array<float, 3> e;
+	//Repere d'axes
+	std::array<vec3, 3> u;
+	void SetCenter();
+	void SetNormals();
+	void SetExtents();
+	void SetAABB();
 	std::vector<vec3>_faces;
 	
 

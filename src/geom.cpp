@@ -2,6 +2,7 @@
 #include <basic_structs.h>
 #include <glm/gtx/euler_angles.hpp>
 #include <iostream>
+#include <array>
 //Jai juste tout ecrit ce qui a dans le header, jai fait les constructeurs etc..
 Geometry::Geometry(vec3 position, vec3 orientation, vec3 scaling, Material* mtl)
 :_position(position),
@@ -14,11 +15,9 @@ _material(mtl)
 	mat4 scaling_mat = glm::scale(mat4(), scaling);
 	mat4 orientation_mat = glm::orientate4(orientation);
 	_modelTransform ={
-		
+		scaling_mat*
 		translation_mat
 	};
-	
-	
 	
 	
 }
@@ -78,9 +77,29 @@ Box::Box(vec3 position, vec3 orientation, vec3 scaling, Material* mtl)
 	//position = vec3(0);
 	//La transformation est appliquee dans la fonction de collision
 	
-	vec4 center4 = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	/*vec4 center4 = vec4(0.0f, 0.0f, 0.0f, 1.0f);
 	center4 = _modelTransform * center4;
-	_center = vec3(center4);
+	_center = vec3(center4);*/
+
+
+	vec3 corner_ftr{ 1, 1, 1 };//0
+	vec3 corner_rbl{-1, -1, -1 };//1
+	vec3 corner_fbr{ corner_ftr.x, corner_rbl.y, corner_ftr.z };//2
+	vec3 corner_ftl{ corner_ftr.x, corner_ftr.y, corner_rbl.z };//3
+	vec3 corner_fbl{ corner_ftr.x, corner_rbl.y, corner_rbl.z };//4
+	vec3 corner_rtr{ corner_rbl.x, corner_ftr.y, corner_ftr.z };//5
+	vec3 corner_rtl{ corner_rbl.x, corner_ftr.y, corner_rbl.z };//6
+	vec3 corner_rbr{ corner_rbl.x, corner_rbl.y, corner_ftr.z };//7
+	init_points = { { corner_ftr, corner_rbl, corner_fbr, corner_ftl, corner_fbl, corner_rtr, corner_rtl, corner_rbr } };
+	for (int i = 0; i < 8; i++){
+		vec4 v4(init_points[i], 1);
+		v4 = (_modelTransform*v4);
+		vec3 v3(v4);
+		points[i] = v3;
+	}
+	SetCenter();
+	SetNormals();
+	SetExtents();
 
 	_faces.push_back(vec3(1.0f, 0.0f, 0.0f));
 	_faces.push_back(vec3(0.0f, 1.0f, 0.0f));
@@ -98,120 +117,82 @@ Box::Box(vec3 position, vec3 orientation, vec3 scaling, Material* mtl)
 	
 }
 
+void Box::SetCenter(){
+	auto resultX = std::minmax_element(points.begin(), points.end(), [](const vec3& lhs, const vec3& rhs) {
+		return lhs.x < rhs.x;
+	});
+	auto resultY = std::minmax_element(points.begin(), points.end(), [](const vec3& lhs, const vec3& rhs) {
+		return lhs.y < rhs.y;
+	});
+	auto resultZ = std::minmax_element(points.begin(), points.end(), [](const vec3& lhs, const vec3& rhs) {
+		return lhs.z < rhs.z;
+	});
+	_center.x = resultX.first->x + (resultX.second->x - resultX.first->x) / 2;
+	_center.y = resultY.first->y + (resultY.second->y - resultY.first->y) / 2;
+	_center.z = resultZ.first->z + (resultZ.second->z - resultZ.first->z) / 2;
+}
+void Box::SetNormals(){
+	u.at(0) = normalize(points.at(4) - points.at(1)); //axe des x
+	u.at(1) = normalize(points.at(6) - points.at(1)); //axe des y
+	u.at(2) = normalize(points.at(7) - points.at(1)); //axe des z
+}
+void Box::SetExtents(){
+	e.at(0) = glm::length(points.at(4) - points.at(1)) / 2; //fbl-rbl
+	e.at(1) = glm::length(points.at(6) - points.at(1)) / 2; //axe des y
+	e.at(2) = glm::length(points.at(7) - points.at(1)) / 2; //axe des z
+}
+
 std::unique_ptr<struct Intersection> Box::intersect(const struct Ray& ray, decimal &currentdepth) const{
-    //https://code.google.com/p/opengl-tutorial-org/source/browse/misc05_picking/misc05_picking_custom.cpp
+	float maxS = -FLT_MAX;
+	float minT = FLT_MAX;
 
-	// Intersection method from Real-Time Rendering and Essential Mathematics for Games
+	// compute difference vector
+	vec3 diff = _center - ray.origin;
 
-	vec3  _min = vec3(-1.0f, -1.0f, -1.0f);
-	vec3 _max = vec3(1.0f, 1.0f, 1.0f);
-	// Intersection method from Real-Time Rendering and Essential Mathematics for Games
-
-	float tMin = 0.0f;
-	float tMax = 100000.0f;
-
-	glm::vec3 OBBposition_worldspace(_modelTransform[3].x, _modelTransform[3].y, _modelTransform[3].z);
-
-	glm::vec3 delta = OBBposition_worldspace - ray.origin;
-
-	// Test intersection with the 2 planes perpendicular to the OBB's X axis
+	// for each axis do
+	for (int i = 0; i < 3; ++i)
 	{
-		glm::vec3 xaxis(_modelTransform[0].x, _modelTransform[0].y, _modelTransform[0].z);
-		float e = glm::dot(xaxis, delta);
-		float f = glm::dot(ray.direction, xaxis);
+		// get axis i
+		vec3 axis = u[i];
 
-		if (fabs(f) > 0.001f){ // Standard case
+		// project relative vector onto axis
+		float et = dot(axis,diff);
+		float f = dot(ray.direction,axis);
 
-			float t1 = (e + _min.x) / f; // Intersection with the "left" plane
-			float t2 = (e + _max.x) / f; // Intersection with the "right" plane
-			// t1 and t2 now contain distances betwen ray origin and ray-plane intersections
-
-			// We want t1 to represent the nearest intersection, 
-			// so if it's not the case, invert t1 and t2
-			if (t1>t2){
-				float w = t1; t1 = t2; t2 = w; // swap t1 and t2
-			}
-
-			// tMax is the nearest "far" intersection (amongst the X,Y and Z planes pairs)
-			if (t2 < tMax)
-				tMax = t2;
-			// tMin is the farthest "near" intersection (amongst the X,Y and Z planes pairs)
-			if (t1 > tMin)
-				tMin = t1;
-
-			// And here's the trick :
-			// If "far" is closer than "near", then there is NO intersection.
-			// See the images in the tutorials for the visual explanation.
-			if (tMax < tMin)
+		// ray is parallel to plane
+		if (f==0)
+		{
+			// ray passes by box
+			if (-et - e[i] > 0.0f || -et + e[i] > 0.0f)
 				return false;
+			continue;
+		}
 
+		float s = (et - e[i]) / f;
+		float t = (et + e[i]) / f;
+
+		// fix order
+		if (s > t)
+		{
+			float temp = s;
+			s = t;
+			t = temp;
 		}
-		else{ // Rare case : the ray is almost parallel to the planes, so they don't have any "intersection"
-			if (-e + _min.x > 0.0f || -e + _max.x < 0.0f)
-				return false;
-		}
+
+		// adjust min and max values
+		if (s > maxS)
+			maxS = s;
+		if (t < minT)
+			minT = t;
+
+		// check for intersection failure
+		if (minT < 0.0f || maxS > minT)
+			return false;
 	}
 
-
-	// Test intersection with the 2 planes perpendicular to the OBB's Y axis
-	// Exactly the same thing than above.
-	{
-		glm::vec3 yaxis(_modelTransform[1].x, _modelTransform[1].y, _modelTransform[1].z);
-		float e = glm::dot(yaxis, delta);
-		float f = glm::dot(ray.direction, yaxis);
-
-		if (fabs(f) > 0.001f){
-
-			float t1 = (e + _min.y) / f;
-			float t2 = (e + _max.y) / f;
-
-			if (t1>t2){ float w = t1; t1 = t2; t2 = w; }
-
-			if (t2 < tMax)
-				tMax = t2;
-			if (t1 > tMin)
-				tMin = t1;
-			if (tMin > tMax)
-				return false;
-
-		}
-		else{
-			if (-e + _min.y > 0.0f || -e + _max.y < 0.0f)
-				return false;
-		}
-	}
-
-
-	// Test intersection with the 2 planes perpendicular to the OBB's Z axis
-	// Exactly the same thing than above.
-	{
-		glm::vec3 zaxis(_modelTransform[2].x, _modelTransform[2].y, _modelTransform[2].z);
-		float e = glm::dot(zaxis, delta);
-		float f = glm::dot(ray.direction, zaxis);
-
-		if (fabs(f) > 0.001f){
-
-			float t1 = (e + _min.z) / f;
-			float t2 = (e + _max.z) / f;
-
-			if (t1>t2){ float w = t1; t1 = t2; t2 = w; }
-
-			if (t2 < tMax)
-				tMax = t2;
-			if (t1 > tMin)
-				tMin = t1;
-			if (tMin > tMax)
-				return false;
-
-		}
-		else{
-			if (-e + _min.z > 0.0f || -e + _max.z < 0.0f)
-				return false;
-		}
-	}
-
-	vec3 ray_isect = ray.origin + ray.direction* (decimal)tMin;
-	
+	// done, have intersection
+	vec3 ray_isect = ray.origin + ray.direction* (decimal)maxS;
+	std::cout << _center.x << "," << _center.y << "," << _center.z << std::endl;
 	decimal min_face_dist = INFINITY;
 	uint index;
 	for (uint i = 0; i < _faces.size(); i++){
