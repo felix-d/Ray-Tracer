@@ -12,8 +12,7 @@ vec3 Material::shade(const Intersection* isect, uint8_t depth) const {
 	//		accumulate contribution
 	const std::vector<std::unique_ptr<Light>>& lights = isect->scene->lights();
 	////Pour l'accumulation de la contribution
-	vec3 total_light (0);
-	total_light += vec3(0.2);
+	vec3 total_light (0.0f);
 	////initialisation de la position du shadow ray
 	vec3 shadow_ray_origin = isect->position + bias * isect->normal;
 	
@@ -43,18 +42,13 @@ vec3 Material::shadeLight(const Intersection* isect, const Light* l, uint8_t dep
 	// facteur d'echelle pour le damier
 	float scale = 10.0f;
 	float u = isect->uv.x;
-	//std::cout << "u is" << u << std::endl;
 	float v = isect->uv.y;
-	//std::cout << "v is" << v << std::endl;
 	vec3 color;
-	//std::cout << "floor u is" << floorf(scale * u) << std::endl;
-	//std::cout << "floor v is" << floorf(scale * v) << std::endl;
 	if ((int)(floorf(scale * u) + floorf(scale * v)) % 2 == 1){
-		color = vec3(0.0f);
+		color = vec3(1.0f);
 	}
 	else
-		color = vec3(1.0f);
-	//vec3 color = glm::vec3(1.0f, 0.5f, 0.7f);
+		color = vec3(0.0f);
 	return color;
 }
 

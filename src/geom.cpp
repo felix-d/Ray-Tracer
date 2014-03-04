@@ -17,11 +17,9 @@ _material(mtl)
 	mat4 scaling_mat = glm::scale(mat4(), scaling);
 	mat4 orientation_mat = glm::orientate4(orientation);
 	_modelTransform ={
-		
 		translation_mat*
 		scaling_mat
 	};
-	
 	
 }
 
@@ -48,7 +46,7 @@ std::unique_ptr<struct Intersection> Sphere::intersect(const struct Ray& ray, de
 	decimal t = -b - sqrt(discr);
 	if (t < 0.0f)
 		t = 0.0f;
-	vec3 ray_isect = ray.origin + (decimal)t * ray.direction;
+	vec3 ray_isect = ray.origin + t * ray.direction;
 	//std::cout << "intersection at " << position.x << " " << position.y << " " << position.z << std::endl;
 	vec3 normal = glm::normalize(ray_isect - _center);
 
@@ -56,18 +54,10 @@ std::unique_ptr<struct Intersection> Sphere::intersect(const struct Ray& ray, de
 	decimal x = ray_isect.x;
 	decimal y = ray_isect.y;
 	decimal z = ray_isect.z;
-
-	/*float v = acosf(z / _radius) / glm::pi<float>();
-	float u = acosf(x / (_radius * sinf(glm::pi<float>() * v))) / (2.0f * glm::pi<float>());*/
-
-	decimal u;
-	if (y > 0)
-		u = acosf(x / sqrtf(powf(x, 2.0f) + powf(y, 2.0f))) / (2.0f * glm::pi<decimal>());
-	else
-		u = 1 - acosf(x / sqrtf(powf(x, 2.0f) + powf(y, 2.0f))) / (2.0f * glm::pi<decimal>());
-
-	decimal v = acosf(z / _radius) / glm::pi<decimal>();
 	
+	decimal u = 0.5 + atan2(normal.z, normal.x) / (2 * glm::pi<decimal>());
+	decimal v = 0.5 - asin(normal.y) / glm::pi<decimal>();
+
 	vec2 uv = glm::vec2(u, v);
 	
 	std::unique_ptr<struct Intersection> isect(new Intersection{ ray, ray_isect, normal, uv, _material });

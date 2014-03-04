@@ -24,8 +24,8 @@ int main(int argc, const char* argv[])
 	std::string outfilename = "image.ppm";
 	std::string infilename = "../../scenes/uv.scn";
 
-	uint width = 1024;
-	uint height = 768;
+	uint width = 640;
+	uint height = 480;
 	uint samples = 1;
 
 	// Simple tokenization scheme
