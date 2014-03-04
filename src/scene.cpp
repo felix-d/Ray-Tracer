@@ -123,7 +123,7 @@ Scene::Scene(const char* file)
 			iss >> l->color >> l->positionOrDirection;
 
 			if (l->directional())
-				l->positionOrDirection = normalize(l->positionOrDirection);
+				//l->positionOrDirection = normalize(l->positionOrDirection);
 
 			_lights.push_back(std::unique_ptr<Light>(l));
 		}
@@ -173,7 +173,6 @@ std::unique_ptr<Intersection> Scene::trace(const Ray& ray, uint8_t depth, decima
 	//On n'est pas obliger de faire la recursion tout de suite qui decremente le depth a chaque appel, on peut juste commencer par une iteration lol
 	if (depth == 0)
 		return nullptr;
-
 	decimal min_dist = maxdist;
 	std::unique_ptr<Intersection> nearest_isect;
 	for (uint i = 0; i < _geometry.size(); i++){

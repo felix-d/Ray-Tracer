@@ -17,6 +17,7 @@ protected:
 	vec3 _position;
 	vec3 _orientation;
 	vec3 _scaling;
+	mat4 _modelTransform;
 	Material* _material;
 
 	// Transform order: scaling, then rotation, then translation (use glm methods)
@@ -33,7 +34,7 @@ public:
 	//change any class members(except ones that are marked mutable)
 	virtual std::unique_ptr<struct Intersection> intersect(const struct Ray& ray, decimal &currentdepth) const override;
 protected:
-	float _radius;
+	decimal _radius;
 	vec3 _center;
 	
 };
@@ -44,6 +45,13 @@ public:
 	Box(vec3 position, vec3 orientation, vec3 scaling, Material* mtl = new Material());
 
 	virtual std::unique_ptr<struct Intersection> intersect(const struct Ray& ray, decimal &currentdepth) const override;
+protected:
+	vec3 _min;
+	vec3 _max;
+	vec3 _center;
+	std::vector<vec3>_faces;
+	
+
 };
 
 class Cylinder : public Geometry

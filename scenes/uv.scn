@@ -1,12 +1,12 @@
 Material Default "uv"
 
 Sphere (-1, 0, 0) (0) (0.75) "uv"
-#Box (2, 0, -2) (0) (0.75) "uv"
+Box (2, 0, -2) (0) (0.75) "uv"
 #Cone (0, 0, 2) (0) (0.75) "uv"
 #Cone (2, 0, 2) (0, 180, 0) (0.75) "uv"
 #Cylinder (2, 0, 0) (0, 0, 0) (0.75) "uv"
 
-Light Directional NoShadows (4) (1, 1, 0)
+Light Directional NoShadows (4) (-2, 4, 0)
 
 Background (0.4)
 
