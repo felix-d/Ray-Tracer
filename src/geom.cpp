@@ -183,8 +183,10 @@ std::unique_ptr<struct Intersection> Box::intersect(const struct Ray& ray, decim
 		uv_coord_0_1 = points[6];
 	}
 
-	decimal u = glm::length(glm::cross((ray_isect - uv_coord_0_0), (ray_isect - uv_coord_1_0))) / glm::length(uv_coord_1_0 - uv_coord_0_0);
-	decimal v = glm::length(glm::cross((ray_isect - uv_coord_0_0), (ray_isect - uv_coord_0_1))) / glm::length(uv_coord_0_1 - uv_coord_0_0);
+	decimal u = glm::length(glm::cross((ray_isect - uv_coord_0_0), (ray_isect - uv_coord_1_0))) / (2 * glm::length(uv_coord_1_0 - uv_coord_0_0));
+	std::cout << u << std::endl;
+	decimal v = glm::length(glm::cross((ray_isect - uv_coord_0_0), (ray_isect - uv_coord_0_1))) / (2 * glm::length(uv_coord_0_1 - uv_coord_0_0));
+	std::cout << v << std::endl;
 
 	vec2 uv = glm::vec2(u, v);
 
