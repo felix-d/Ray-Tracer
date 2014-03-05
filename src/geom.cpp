@@ -311,17 +311,8 @@ https://code.google.com/p/pwsraytracer/source/browse/trunk/raytracer/cylinder.cp
 Cone::Cone(vec3 position, vec3 orientation, vec3 scaling, Material* mtl)
 :Geometry(position, orientation, scaling, mtl){
 	_radius = scaling.x;
-
-	_apex = position + vec3(0.0f, 2.0f, 0.0f);
-	vec4 apex_v4(_apex, 1);
-	apex_v4 = _modelTransform * apex_v4;
-	_apex = vec3(apex_v4);
-
-	_base_center = position;
-	vec4 base_center_v4(_base_center, 1);
-	base_center_v4 = _modelTransform * base_center_v4;
-	_base_center = vec3(base_center_v4);
-
+	_apex = vec3(_modelTransform * vec4(0.0f, 1.0f, 0.0f, 1.0f));
+	_base_center = vec3(_modelTransform * vec4(0.0f, 0.0f, 0.0f, 1.0f));
 	_direction = normalize(_base_center - _apex);
 	_theta = atan(_radius / length(_base_center - _apex));
 	_height = length(_base_center - _apex);
