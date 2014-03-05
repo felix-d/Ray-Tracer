@@ -453,7 +453,11 @@ vec2 calculateUVCircle(const vec3& point){
 	
 	uv.x = sqrt((pow(point.x, 2) + pow(point.z, 2)));
 	
-	uv.y = abs(atan2(point.z, point.x));
+	double phi = (atan2(point.x, point.z));
+	if (phi < 0.0){
+		phi += 2 * pi<decimal>();
+	}
+	uv.y = phi * (1 / (2 * pi<decimal>()));
 	
 	return uv;
 }
