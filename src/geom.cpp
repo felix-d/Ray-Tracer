@@ -264,24 +264,24 @@ vec3 Cylinder::calculateNormal(vec3& hitPoint, bool sides)const{
 Cone::Cone(vec3 position, vec3 orientation, vec3 scaling, Material* mtl)
 :Geometry(position, orientation, scaling, mtl){
 	_radius = 1.0;
-	_apex = vec3(0.0, 1, 0);
-	_base_center = vec3(0.0, 0.0, 0); 
+	_apex = vec3(0.0, 0.00, 0);
+	_base_center = vec3(0.0, -1, 0); 
 	_direction = vec3(0.0,1,0);
-	_height = 1;
+	_height = 1.00;
 }
 
 std::unique_ptr<struct Intersection> Cone::intersect(const struct Ray& ray, decimal &currentdepth) const{
     //https://github.com/Penetra/CG-Project/blob/master/Cone.cpp
-
+	
 	double rh = -(_radius*_radius) / (_height*_height);
 	double a = pow(ray.direction.x, 2) + pow(ray.direction.z, 2) +
 		rh*pow(ray.direction.y, 2);
-	double b = 2 * (ray.direction.x*(ray.origin.x - _base_center.x) + 
+	double b = 2 * (ray.direction.x*(ray.origin.x - _base_center.x) +
 		ray.direction.z*(ray.origin.z - _base_center.z) +
 		rh*ray.direction.y*(ray.origin.y - _base_center.y - _height));
 	double c = pow(ray.origin.x - _base_center.x, 2) +
 		pow(ray.origin.z - _base_center.z, 2) +
-		rh*pow(ray.origin.y - _base_center.y -_height, 2);
+		rh*pow(ray.origin.y - _base_center.y - _height, 2);
 	double root = b*b - 4.0*a*c;
 	if (root<0) return nullptr;
 	double t = 0, t1 = DBL_MAX, t2 = DBL_MAX, t3 = DBL_MAX;
@@ -299,13 +299,13 @@ std::unique_ptr<struct Intersection> Cone::intersect(const struct Ray& ray, deci
 	}
 	else if (intersection2.y <= _apex.y &&
 		intersection2.y >= _base_center.y)
-		if(t2 > 0.0f) t = t2;
+	if (t2 > 0.0f) t = t2;
 
 
-	if (plane_Intersection(ray, vec3(0,-1,0), _base_center, t3)) {
+	if (plane_Intersection(ray, vec3(0, -1, 0), _base_center, t3)) {
 		intersection = ray.origin + (ray.direction*t3);
 		if (pow(intersection.x - _base_center.x, 2) + pow(intersection.z - _base_center.z, 2) <= _radius*_radius)
-			if (t3<t) t = t3;
+		if (t3<t) t = t3;
 	}
 
 	if (t != DBL_MAX && t>0.00000001){
