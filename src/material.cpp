@@ -46,7 +46,7 @@ vec3 Material::shadeLight(const Intersection* isect, const Light* l, uint8_t dep
 	float v = isect->uv.y;
 	//if(u>1)std::cout << u << std::endl;
 	vec3 color;
-	if (_texture==nullptr){
+	if (_texture != nullptr){
 		color = _texture->get(u, v);
 		//std::cout << color.x << " " << color.y << " " << color.z << std::endl;
 	}

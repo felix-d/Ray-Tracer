@@ -51,7 +51,7 @@ Sphere::Sphere(vec3 position, vec3 orientation, vec3 scaling, Material* mtl)
 }
 
 std::unique_ptr<struct Intersection> Sphere::intersect(const struct Ray& ray, decimal &currentdepth) const{  
-vec3 ray_origin = vec3(_inv_modelTransform * vec4(ray.origin, 1.0f));
+	vec3 ray_origin = vec3(_inv_modelTransform * vec4(ray.origin, 1.0f));
 	vec3 ray_direction = vec3(_inv_modelTransform * vec4(ray.direction, 0.0f));
 	
 	/*
@@ -89,11 +89,9 @@ vec3 ray_origin = vec3(_inv_modelTransform * vec4(ray.origin, 1.0f));
 }
 
 
-}
-
 Box::Box(vec3 position, vec3 orientation, vec3 scaling, Material* mtl)
 :Geometry(position, orientation, scaling, mtl){
-	_center = vec3(0.0f, 0.0f, 0.0f);
+	_center = position;
 	_min = vec3(-1.0f, -1.0f, -1.0f);
 	_max = vec3(1.0f, 1.0f, 1.0f);
 
@@ -119,18 +117,21 @@ Box::Box(vec3 position, vec3 orientation, vec3 scaling, Material* mtl)
 
 
 std::unique_ptr<struct Intersection> Box::intersect(const struct Ray& ray, decimal &currentdepth) const{
-	float t1 = (_min.x - ray.origin.x)*(1.0 / ray.direction.x);
-	float t2 = (_max.x - ray.origin.x)*(1.0 / ray.direction.x);
-	float t3 = (_min.y - ray.origin.y)*(1.0 / ray.direction.y);
-	float t4 = (_max.y - ray.origin.y)*(1.0 / ray.direction.y);
-	float t5 = (_min.z - ray.origin.z)*(1.0 / ray.direction.z);
-	float t6 = (_max.z - ray.origin.z)*(1.0 / ray.direction.z);
+	vec3 ray_origin = vec3(_inv_modelTransform * vec4(ray.origin, 1.0f));
+	vec3 ray_direction = vec3(_inv_modelTransform * vec4(ray.direction, 0.0f));
+
+	float t1 = (_min.x - ray_origin.x)*(1.0 / ray_direction.x);
+	float t2 = (_max.x - ray_origin.x)*(1.0 / ray_direction.x);
+	float t3 = (_min.y - ray_origin.y)*(1.0 / ray_direction.y);
+	float t4 = (_max.y - ray_origin.y)*(1.0 / ray_direction.y);
+	float t5 = (_min.z - ray_origin.z)*(1.0 / ray_direction.z);
+	float t6 = (_max.z - ray_origin.z)*(1.0 / ray_direction.z);
 	decimal t = max(max(min(t1, t2), min(t3, t4)), min(t5, t6));
 	float tmax = min(min(max(t1, t2), max(t3, t4)), max(t5, t6));
 	if (tmax < 0) return nullptr;
 	if (t > tmax) return nullptr;
 
-	vec3 ray_isect = ray.origin + (ray.direction * t);
+	vec3 ray_isect = ray_origin + t * ray_direction;
 	
 	//Calcul des normales
 	decimal min_face_dist = INFINITY;
@@ -142,7 +143,7 @@ std::unique_ptr<struct Intersection> Box::intersect(const struct Ray& ray, decim
 			index = i;
 		}
 	}
-	vec3 normal = normalize(_faces_points[index] - _center);
+	vec3 normal = glm::normalize((vec3(glm::transpose(_inv_modelTransform) * vec4(glm::normalize(_faces_points[index]), 0.0f))));
 
 	// Calcul des coordonees uv		
 	vec3 uv_coord_0_0;
@@ -187,9 +188,11 @@ std::unique_ptr<struct Intersection> Box::intersect(const struct Ray& ray, decim
 	}
 
 	decimal u = glm::length(glm::cross((ray_isect - uv_coord_0_0), (ray_isect - uv_coord_1_0))) / (2 * glm::length(uv_coord_1_0 - uv_coord_0_0));
-	std::cout << u << std::endl;
+	//std::cout << u << std::endl;
 	decimal v = glm::length(glm::cross((ray_isect - uv_coord_0_0), (ray_isect - uv_coord_0_1))) / (2 * glm::length(uv_coord_0_1 - uv_coord_0_0));
-	std::cout << v << std::endl;
+	//std::cout << v << std::endl;
+
+	ray_isect = vec3(_modelTransform * vec4(ray_origin + t * ray_direction, 1.0f));
 
 	vec2 uv = glm::vec2(u, v);
 
@@ -389,8 +392,6 @@ vec2 calculateUVSphere(const vec3& point){
 	
 	decimal u = acos(point.y / 1);
 	
-
-	
 	double v = atan2(point.x, point.z);
 	//std::cout << v << std::endl;
 	
@@ -409,11 +410,10 @@ vec2 calculateUVCylinder(const vec3& point){
 
 	uv.x = phi * (1/(2 * pi<decimal>()));
 	uv.y = (point.y + 1) / 2;
-	
-	
-	
+		
 	return uv;
 }
+
 
 vec2 calculateUVCircle(const vec3& point){
 	vec2 uv;
