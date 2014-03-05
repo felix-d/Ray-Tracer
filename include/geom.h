@@ -7,6 +7,7 @@
 int plane_Intersection(const Ray& ray, vec3 normal, vec3 point, double &t);
 vec2 calculateUVSphere(const vec3& point);
 vec2 calculateUVCylinder(const vec3& point);
+vec2 calculateUVCircle(const vec3& point);
 
 class Geometry
 {
@@ -75,7 +76,7 @@ public:
 	Cylinder(vec3 position, vec3 orientation, vec3 scaling, Material* mtl = new Material());
 
 	virtual std::unique_ptr<struct Intersection> intersect(const struct Ray& ray, decimal &currentdepth) const override;
-
+	vec3 calculateNormal(vec3& hitPoint, bool sides) const;
 protected:
 	vec3 _center;
 	vec3 _p;
@@ -89,7 +90,7 @@ class Cone : public Geometry
 {
 public:
 	Cone(vec3 position, vec3 orientation, vec3 scaling, Material* mtl = new Material());
-
+	void Cone::calculateNormal(vec3& hitPoint, vec3& normal);
 	virtual std::unique_ptr<struct Intersection> intersect(const struct Ray& ray, decimal &currentdepth) const override;
 protected:
 	vec3 _base_center;
