@@ -113,7 +113,7 @@ std::unique_ptr<struct Intersection> Box::intersect(const struct Ray& ray, decim
 	}
 
 	vec3 normal = glm::normalize(_faces_points[index]);
-	vec3 normal = glm::normalize((vec3(glm::transpose(_inv_modelTransform) * vec4(normal, 0.0f))));
+	normal = glm::normalize((vec3(glm::transpose(_inv_modelTransform) * vec4(normal, 0.0f))));
 
 	// Calcul des coordonees uv		
 	vec3 uv_coord_0_0;
