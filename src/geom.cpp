@@ -160,12 +160,12 @@ std::unique_ptr<struct Intersection> Box::intersect(const struct Ray& ray, decim
 	}
 	vec3 normal = normalize(_faces_points[index] - _center);
 
-	// Calcul des coordonees uv	
-	
+	// Calcul des coordonees uv		
 	vec3 uv_coord_0_0;
 	vec3 uv_coord_1_0;
 	vec3 uv_coord_0_1;
 
+	// test pour savoir sur quel plan se trouve l'intersection
 	if (index == 0) {
 		uv_coord_0_0 = points[4];
 		uv_coord_1_0 = points[2];
@@ -201,11 +201,15 @@ std::unique_ptr<struct Intersection> Box::intersect(const struct Ray& ray, decim
 		uv_coord_1_0 = points[4];
 		uv_coord_0_1 = points[6];
 	}
-	
+
+	// Indice de scaling pour normaliser les uv sur une echelle de 0 a 1
+	decimal scaling_u = 1 / glm::length(uv_coord_0_1 - uv_coord_0_0);
+	decimal scaling_v = 1 / glm::length(uv_coord_1_0 - uv_coord_0_0);
+
 	decimal u = glm::length(glm::cross((ray_isect - uv_coord_0_0), (ray_isect - uv_coord_1_0))) / glm::length(uv_coord_1_0 - uv_coord_0_0);
-	//std::cout << u << std::endl;
+	u = u * scaling_u;
 	decimal v = glm::length(glm::cross((ray_isect - uv_coord_0_0), (ray_isect - uv_coord_0_1))) / glm::length(uv_coord_0_1 - uv_coord_0_0);
-	//std::cout << v << std::endl;
+	v = v * scaling_v;
 
 	vec2 uv = glm::vec2(u, v);
 
