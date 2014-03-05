@@ -4,6 +4,25 @@
 #include <iostream>
 #include <array>
 
+
+
+
+//CEST NORMAL SI LES TRANSFORMATIONS NE MARCHENT PLUS
+//JE LES AI ENLEVER POUR QUON IMPLEMENTE AVEC LA BONNE TECHNIQUE
+
+// 1.Utiliser linverse de la matrice pour calculer le nouveau ray.origin et ray.direction et ainsi trouver lintersection
+//   (a la place de modifier l'objet)
+//
+// 2.A lendroit du hit, etant donner que le rayon transforme frappe l'objet canonique, 
+//   il faut retransformer le point touche avec la matrice de transformation pour connaitre le point de l'objet transforme.
+//
+// 3.Utiliser l'inverse de la transposee pour calculer la normale a partir de la normale de l'objet canonique
+//
+// 4.Pour les uv, calculer tout simplement les uv de l'objet canonique, ils seront mappes automatiquement.
+
+
+
+
 //https://code.google.com/p/pwsraytracer/source/browse/trunk/raytracer/
 //Jai juste tout ecrit ce qui a dans le header, jai fait les constructeurs etc..
 Geometry::Geometry(vec3 position, vec3 orientation, vec3 scaling, Material* mtl)
