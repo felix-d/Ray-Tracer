@@ -55,20 +55,21 @@ Sphere::Sphere(vec3 position, vec3 orientation, vec3 scaling, Material* mtl)
 
 std::unique_ptr<struct Intersection> Sphere::intersect(const struct Ray& ray, decimal &currentdepth) const{
    
-	vec3 m = ray.origin - _center;
-	decimal b = glm::dot(m, ray.direction);
-	decimal c = glm::dot(m, m) - _radius * _radius;
-	if (c > 0.0f && b > 0.0f)
+	float a = glm::dot(ray.direction, ray.direction);
+	float b = 2 * glm::dot(ray.origin, ray.direction);
+	float c = glm::dot(ray.origin, ray.origin) - _radius * _radius;
+	float t0, t1;
+	if (!solveQuadratic(a, b, c, t0, t1) || t1 < 0)
 		return nullptr;
-	decimal discr = b * b - c;
-	if (discr < 0.0f)
-		return nullptr;
-	decimal t = -b - sqrt(discr);
-	if (t < 0.0f)
-		t = 0.0f;
-	vec3 ray_isect = ray.origin + t * ray.direction;
+	if (t1 < t0)
+		std::swap(t0, t1);
+	double t = (t0 < 0) ? (double)t1 : (double)t0;
+
+	vec3 ray_isect = vec3(_modelTransform * vec4(ray.origin + t * ray.direction, 1.0f));
+	//vec3 normal = glm::normalize((vec3(glm::transpose(_inv_modelTransform) * vec4(glm::normalize(ray_isect - _center), 0.0f))));
 	vec3 normal = glm::normalize(ray_isect - _center);
 	vec2 uv = calculateUVSphere(normal);
+
 	std::unique_ptr<struct Intersection> isect(new Intersection{ ray, ray_isect, normal, uv, _material });
 	return std::move(isect);
     
@@ -369,10 +370,19 @@ int plane_Intersection(const Ray& ray, vec3 normal, vec3 point, double &t){
 }
 
 vec2 calculateUVSphere(const vec3& point){
-	decimal u = 0.5 + atan2(point.z, point.x) / (2 * glm::pi<decimal>());
-	decimal v = 0.5 - asin(point.y) / glm::pi<decimal>();
+	//decimal u = 0.5 + atan2(point.z, point.x) / (2 * glm::pi<decimal>());
+	
+	decimal u = acos(point.y / 1);
+	
 
-	return vec2(u, v);
+	
+	double v = atan2(point.x, point.z);
+	//std::cout << v << std::endl;
+	
+	v += pi<decimal>();
+	if (v<0)std::cout << v << std::endl;
+
+	return vec2(u/pi<decimal>(), v/(2*pi<decimal>()));
 }
 
 
@@ -394,6 +404,7 @@ vec2 calculateUVCircle(const vec3& point){
 	vec2 uv;
 	
 	uv.x = sqrt((pow(point.x, 2) + pow(point.z, 2)));
+	std::cout << uv.x << std::endl;
 	
 	double phi = (atan2(point.x, point.z));
 	if (phi < 0.0){

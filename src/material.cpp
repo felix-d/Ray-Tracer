@@ -28,7 +28,9 @@ vec3 Material::shade(const Intersection* isect, uint8_t depth) const {
 			inShadow = true;
 		
 		if (!inShadow)
-			total_light += this->shadeLight(isect, lights[i].get(), depth);		
+			total_light += this->shadeLight(isect, lights[i].get(), depth);
+			
+			
 			
 	}
 	return total_light;
@@ -42,23 +44,26 @@ vec3 Material::shadeLight(const Intersection* isect, const Light* l, uint8_t dep
 	float scale = 10.0f;
 	float u = isect->uv.x;
 	float v = isect->uv.y;
-	
+	//if(u>1)std::cout << u << std::endl;
 	vec3 color;
-	if ((int)(floorf(scale * u) + floorf(scale * v)) % 2 == 1){
-		color = vec3(1.0f);
+	if (_texture==nullptr){
+		color = _texture->get(u, v);
+		//std::cout << color.x << " " << color.y << " " << color.z << std::endl;
 	}
-	else
-		color = vec3(0.0f);
+	else{
+		if ((int)(floorf(scale * u) + floorf(scale * v)) % 2 == 1){
+			color = vec3(1.0f);
+		}
+		else
+			color = vec3(0.0f);
+	}
+	//return vec3(1, 1, 1);
 	return color;
 }
 
 
 vec3 MaterialLambert::shadeLight(const Intersection* isect, const Light* l, uint8_t depth) const {
-	
-	double lambert = glm::dot(glm::normalize(l->positionOrDirection), isect->normal);
-	vec3 color = lambert * glm::cross(_color / glm::pi<double>(), l->color);
-	
-	return color;
+	return vec3(1);
 }
 
 

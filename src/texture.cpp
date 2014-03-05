@@ -1,8 +1,9 @@
 #include <texture.h>
 #include <fstream>
-
+#include <iostream>
 Texture::Texture(const char* filepath)
 {
+	
 	std::ifstream file(filepath, std::ifstream::binary | std::ifstream::in);
 
 	if (!file)
