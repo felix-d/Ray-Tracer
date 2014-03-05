@@ -48,19 +48,8 @@ std::unique_ptr<struct Intersection> Sphere::intersect(const struct Ray& ray, de
 	if (t < 0.0f)
 		t = 0.0f;
 	vec3 ray_isect = ray.origin + t * ray.direction;
-	//std::cout << "intersection at " << position.x << " " << position.y << " " << position.z << std::endl;
 	vec3 normal = glm::normalize(ray_isect - _center);
-
-	// Calcul des coordonees uv
-	decimal x = ray_isect.x;
-	decimal y = ray_isect.y;
-	decimal z = ray_isect.z;
-	
-	decimal u = 0.5 + atan2(normal.z, normal.x) / (2 * glm::pi<decimal>());
-	decimal v = 0.5 - asin(normal.y) / glm::pi<decimal>();
-
-	vec2 uv = glm::vec2(u, v);
-	
+	vec2 uv = calculateUVSphere(normal);
 	std::unique_ptr<struct Intersection> isect(new Intersection{ ray, ray_isect, normal, uv, _material });
 	return std::move(isect);
     
@@ -196,21 +185,19 @@ https://code.google.com/p/pwsraytracer/source/browse/trunk/raytracer/cylinder.cp
 	double tmin = INFINITY;
 	double t = DBL_MAX, t1 = DBL_MAX, t2 = DBL_MAX, t3 = DBL_MAX;
 	vec3 normal;
+	vec2 uv;
 	double ttemp = 0;
-	
+	bool sides = false;
 	double ox = ray.origin.x - _center.x;
 	double oy = ray.origin.y - _center.y;
 	double oz = ray.origin.z - _center.z;
-
 	double dx = ray.direction.x;
 	double dy = ray.direction.y;
 	double dz = ray.direction.z;
-
 	double a = dx * dx + dz * dz;
 	double b = 2.0 * (ox * dx + oz * dz);
 	double c = ox * ox + oz * oz - _radius * _radius;
 	double D = b * b - 4.0 * a * c;
-
 	if (D < 0.0)
 	{
 		//No hitpoints
@@ -221,17 +208,16 @@ https://code.google.com/p/pwsraytracer/source/browse/trunk/raytracer/cylinder.cp
 		double sqrtD = sqrt(D);
 		double aa = a * 2;
 		double t1 = (-b - sqrtD) / aa;
-
 		if (t1 > epsilon<double>())
 		{
 			double y = oy + t1 * dy;
 			if (y > _q.y && y < _p.y)
 			{
-				
-				if (t1 < tmin) {
+				if (t1 < t) {
 					t = t1;
 					//WARNING
 					//attention au calcul de la normal, il va falloir changer le y
+					sides = true;
 					normal = normalize(vec3(((ox + dx*t) * (1 / _radius)), 0, ((oz + dz*t) * (1 / _radius))));
 				}
 			}
@@ -245,32 +231,34 @@ https://code.google.com/p/pwsraytracer/source/browse/trunk/raytracer/cylinder.cp
 				
 				if (t2 < t){
 					t = t2;
-					//WARNING
-					//attention au calcul de la normal, il va falloir changer le y
+					sides = true;
 					normal = normalize(vec3(((ox + dx*t) * (1 / _radius)), 0, ((oz + dz*t) * (1 / _radius))));
 				}
 			}
 		}
 	}
-	if (plane_Intersection(ray, vec3(0, -1, 0), _p, t3)) { /* intersects plane */
+	if (plane_Intersection(ray, vec3(0, -1.0, 0), _p, t3)) { /* intersects plane */
 		vec3 intersection = ray.origin + (ray.direction*t3);
-		if (pow(intersection.x - _p.x, 2) + pow(intersection.z - _p.z, 2) <= _radius*_radius) { /* intersects Cone */
+		if (pow(intersection.x - _p.x, 2) + pow(intersection.z - _p.z, 2) <= _radius*_radius) { /* intersects cylinder */
+			
 			if (t3 < t){
+				
 				t = t3;
+				sides = false;
 				normal = vec3(0, 1, 0);
 			}
 		}
 	}
-
 	if (t != DBL_MAX && t>0.00000001){
 		vec3 ray_isect = ray.origin + ray.direction*(decimal)t;
-		std::unique_ptr<struct Intersection> isect(new Intersection{ ray, ray_isect, normal, vec2(0), _material });
+		if(sides) uv = calculateUVCylinder(ray_isect);
+		else  uv = calculateUVSphere(normalize(ray_isect-_center));
+		std::unique_ptr<struct Intersection> isect(new Intersection{ ray, ray_isect, normal, uv, _material });
 		return std::move(isect);
 	}
-
-
 	return nullptr;
 }
+
 
 Cone::Cone(vec3 position, vec3 orientation, vec3 scaling, Material* mtl)
 :Geometry(position, orientation, scaling, mtl){
@@ -283,22 +271,7 @@ Cone::Cone(vec3 position, vec3 orientation, vec3 scaling, Material* mtl)
 	
 	std::cout << _theta;
 }
-inline bool Quadratic(float A, float B, float C, float *t0,
-	float *t1) {
-	// Find quadratic discriminant
-	float discrim = B * B - 4.f * A * C;
-	if (discrim < 0.) return false;
-	float rootDiscrim = sqrtf(discrim);
-	// Compute quadratic _t_ values
-	float q;
-	if (B < 0) q = -.5f * (B - rootDiscrim);
-	else       q = -.5f * (B + rootDiscrim);
-	*t0 = q / A;
-	*t1 = C / q;
-	if (*t0 > *t1) std::swap(*t0, *t1);
-	return true;
 
-}
 std::unique_ptr<struct Intersection> Cone::intersect(const struct Ray& ray, decimal &currentdepth) const{
     //https://github.com/Penetra/CG-Project/blob/master/Cone.cpp
 
@@ -309,7 +282,7 @@ std::unique_ptr<struct Intersection> Cone::intersect(const struct Ray& ray, deci
 	double root = b*b - 4.0*a*c;
 	if (root<0)
 		return nullptr;
-	double t = DBL_MAX, t1 = DBL_MAX, t2 = DBL_MAX, t3 = DBL_MAX;
+	double t = 0, t1 = DBL_MAX, t2 = DBL_MAX, t3 = DBL_MAX;
 	t1 = (-b + sqrtf(root)) / (2.0*a);
 	t2 = (-b - sqrtf(root)) / (2.0*a);
 
@@ -341,6 +314,7 @@ std::unique_ptr<struct Intersection> Cone::intersect(const struct Ray& ray, deci
 	if (plane_Intersection(ray, vec3(0,-1,0), _base_center, t3)) {
 		intersection = ray.origin + (ray.direction*t3);
 		if (pow(intersection.x - _base_center.x, 2) + pow(intersection.z - _base_center.z, 2) <= _radius*_radius) {
+			
 			if (t3<t)
 				t = t3;
 		}
@@ -365,4 +339,22 @@ int plane_Intersection(const Ray& ray, vec3 normal, vec3 point, double &t){
 	if (t < 0.0000001)
 		return 0;
 	return 1;
+}
+
+vec2 calculateUVSphere(const vec3& point){
+	decimal u = 0.5 + atan2(point.z, point.x) / (2 * glm::pi<decimal>());
+	decimal v = 0.5 - asin(point.y) / glm::pi<decimal>();
+
+	return vec2(u, v);
+}
+
+
+vec2 calculateUVCylinder(const vec3& point){
+	double phi = atan2(point.x, point.z);
+	if (phi < 0.0)
+		phi += 2 * pi<decimal>();
+	vec2 uv;
+	uv.x = phi * (1 / (2 * pi<decimal>()));
+	uv.y = (point.y + 1) / 2;
+	return uv;
 }

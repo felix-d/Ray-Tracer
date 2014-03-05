@@ -44,6 +44,7 @@ vec3 Material::shadeLight(const Intersection* isect, const Light* l, uint8_t dep
 	float scale = 10.0f;
 	float u = isect->uv.x;
 	float v = isect->uv.y;
+	if (u == 0 && v == 0) return vec3(1, 1, 1);
 	vec3 color;
 	if ((int)(floorf(scale * u) + floorf(scale * v)) % 2 == 1){
 		color = vec3(1.0f);
