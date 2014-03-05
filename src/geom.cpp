@@ -26,9 +26,11 @@ _material(mtl)
 
 Sphere::Sphere(vec3 position, vec3 orientation, vec3 scaling, Material* mtl)
 :Geometry(position, orientation, scaling, mtl){
-
-	_radius = scaling.x;
-	_center = vec3(_modelTransform * vec4(0.0f, 0.0f, 0.0f, 1.0f));
+    //TODO implementer constructeur Sphere
+    //L'equation de la sphere est donnee par (X-C).(X-C)=r^2
+    //C est est le centre et r est le rayon
+	_radius = 1.0f;
+	_center = position;
 	
 }
 
@@ -213,9 +215,9 @@ std::unique_ptr<struct Intersection> Box::intersect(const struct Ray& ray, decim
 
 Cylinder::Cylinder(vec3 position, vec3 orientation, vec3 scaling, Material* mtl)
 :Geometry(position, orientation, scaling, mtl){
-	_center = vec3(_modelTransform * vec4(0.0f, 0.0f, 0.0f, 1.0f));
-	_p = vec3(_modelTransform*vec4(0.0f, 1.0f, 0.0f, 1.0f));
-	_q = vec3(_modelTransform*vec4(0.0f, -1.0f, 0.0f, 1.0f));
+	_center = vec3(_modelTransform*vec4(0.0,0,0,1));
+	_p = vec3(_modelTransform*vec4(0.0, 1, 0,1));
+	_q = vec3(_modelTransform*vec4(0.0, -1, 0, 1));
 	_height = scaling.y*2;
 	_radius = 1*scaling.x;
 
@@ -327,12 +329,14 @@ vec3 Cylinder::calculateNormal(vec3& hitPoint, bool sides)const{
 
 Cone::Cone(vec3 position, vec3 orientation, vec3 scaling, Material* mtl)
 :Geometry(position, orientation, scaling, mtl){
-	_radius = scaling.x;
-	_apex = vec3(_modelTransform * vec4(0.0f, 1.0f, 0.0f, 1.0f));
-	_base_center = vec3(_modelTransform * vec4(0.0f, 0.0f, 0.0f, 1.0f));
+	_radius = 1.0;
+	_apex = vec3(0.0, 2, 0);
+	_base_center = vec3(0.0, 0, 0); 
 	_direction = normalize(_base_center - _apex);
 	_theta = atan(_radius / length(_base_center - _apex));
 	_height = length(_base_center - _apex);
+	
+	std::cout << _theta;
 }
 
 std::unique_ptr<struct Intersection> Cone::intersect(const struct Ray& ray, decimal &currentdepth) const{
@@ -446,9 +450,10 @@ vec2 calculateUVCylinder(const vec3& point){
 
 vec2 calculateUVCircle(const vec3& point){
 	vec2 uv;
-	uv.x = sqrt(pow(point.x, 2) + pow(point.z, 2));
 	
-	uv.y = atan2(point.z, point.x);
+	uv.x = sqrt((pow(point.x, 2) + pow(point.z, 2)));
+	
+	uv.y = abs(atan2(point.z, point.x));
 	
 	return uv;
 }
