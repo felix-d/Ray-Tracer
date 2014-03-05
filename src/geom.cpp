@@ -195,7 +195,7 @@ std::unique_ptr<struct Intersection> Cylinder::intersect(const struct Ray& ray, 
 https://code.google.com/p/pwsraytracer/source/browse/trunk/raytracer/cylinder.cpp?r=160
 
 	double tmin = INFINITY;
-	double t = DBL_MAX, t1 = DBL_MAX, t2 = DBL_MAX, t3 = DBL_MAX;
+	double t = DBL_MAX, t1 = DBL_MAX, t2 = DBL_MAX, t3 = DBL_MAX, t4 = DBL_MAX;
 	bool sides = false;
 	double a = pow(ray.direction.x, 2) + pow(ray.direction.z,2);
 	double b = 2.0 * ((ray.origin.x - _center.x) * ray.direction.x + (ray.origin.z - _center.z) * ray.direction.z);
@@ -237,6 +237,15 @@ https://code.google.com/p/pwsraytracer/source/browse/trunk/raytracer/cylinder.cp
 			}
 		}
 	}
+	if (plane_Intersection(ray, vec3(0, 1.0, 0), _q, t4)) {
+		vec3 intersection = ray.origin + (ray.direction*t4);
+		if (pow(intersection.x - _q.x, 2) + pow(intersection.z - _q.z, 2) <= _radius*_radius) {
+			if (t4 < t){
+				t = t4;
+				sides = false;
+			}
+		}
+	}
 	if (t != DBL_MAX && t>0.00000001){
 		vec3 ray_isect = ray.origin + ray.direction*(decimal)t;
 		vec3 normal = calculateNormal(ray_isect, sides);
@@ -251,7 +260,8 @@ https://code.google.com/p/pwsraytracer/source/browse/trunk/raytracer/cylinder.cp
 
 vec3 Cylinder::calculateNormal(vec3& hitPoint, bool sides)const{
 	vec3 normal;
-	if (!sides) normal = normalize(_p-_center);
+	if (!sides && hitPoint.y>_center.y) normal = normalize(_p-_center);
+	else if (!sides && hitPoint.y<_center.y) normal = normalize(_q - _center);
 	else {
 		vec3 direction = normalize(_p - _q);
 		vec3 x = _q + (dot((hitPoint - _q), direction))*direction;
@@ -268,11 +278,13 @@ Cone::Cone(vec3 position, vec3 orientation, vec3 scaling, Material* mtl)
 	_base_center = vec3(0.0, -1, 0); 
 	_direction = vec3(0.0,1,0);
 	_height = 1.00;
+	_center = vec3(0,-0.05,0);
 }
 
 std::unique_ptr<struct Intersection> Cone::intersect(const struct Ray& ray, decimal &currentdepth) const{
-    //https://github.com/Penetra/CG-Project/blob/master/Cone.cpp
-	
+	//https://github.com/Penetra/CG-Project/blob/master/Cone.cpp
+	double t = 0, t1 = DBL_MAX, t2 = DBL_MAX, t3 = DBL_MAX;
+	bool sides = true;
 	double rh = -(_radius*_radius) / (_height*_height);
 	double a = pow(ray.direction.x, 2) + pow(ray.direction.z, 2) +
 		rh*pow(ray.direction.y, 2);
@@ -283,48 +295,56 @@ std::unique_ptr<struct Intersection> Cone::intersect(const struct Ray& ray, deci
 		pow(ray.origin.z - _base_center.z, 2) +
 		rh*pow(ray.origin.y - _base_center.y - _height, 2);
 	double root = b*b - 4.0*a*c;
-	if (root<0) return nullptr;
-	double t = 0, t1 = DBL_MAX, t2 = DBL_MAX, t3 = DBL_MAX;
-	t1 = (-b + sqrtf(root)) / (2.0*a);
-	t2 = (-b - sqrtf(root)) / (2.0*a);
-	vec3 intersection = (ray.origin) + ((ray.direction) * t1);
-	vec3 intersection2 = ray.origin + ((ray.direction) *t2);
-
-	if (intersection.y <= _apex.y && intersection.y >= _base_center.y) {
-		if (intersection2.y <= _apex.y && intersection2.y >= _base_center.y) {
-			if (t1<t2 && t1>0 && t2 >0)t = t1;
-			else if (t2 > 0.0f) t = t2;
+	if (root < 0) sides = false;
+	if (sides){
+		
+		t1 = (-b + sqrtf(root)) / (2.0*a);
+		t2 = (-b - sqrtf(root)) / (2.0*a);
+		vec3 intersection = (ray.origin) + ((ray.direction) * t1);
+		vec3 intersection2 = ray.origin + ((ray.direction) *t2);
+	
+		if (intersection.y <= _apex.y && intersection.y >= _base_center.y) {
+			if (intersection2.y <= _apex.y && intersection2.y >= _base_center.y) {
+				if (t1<t2 && t1>0 && t2 >0)t = t1;
+				else if (t2 > 0.0f) t = t2;
+			}
+			else if (t1 > 0.0f) t = t1;
 		}
-		else if (t1 > 0.0f) t = t1;
+		else if (intersection2.y <= _apex.y &&
+			intersection2.y >= _base_center.y)
+		if (t2 > 0.0f) t = t2;
 	}
-	else if (intersection2.y <= _apex.y &&
-		intersection2.y >= _base_center.y)
-	if (t2 > 0.0f) t = t2;
 
+	if (plane_Intersection(ray, vec3(0, 1.0, 0), _base_center, t3)) {
 
-	if (plane_Intersection(ray, vec3(0, -1, 0), _base_center, t3)) {
-		intersection = ray.origin + (ray.direction*t3);
-		if (pow(intersection.x - _base_center.x, 2) + pow(intersection.z - _base_center.z, 2) <= _radius*_radius)
-		if (t3<t) t = t3;
+		vec3 intersection = ray.origin + (ray.direction*t3);
+		if (pow(intersection.x - _base_center.x, 2) + pow(intersection.z - _base_center.z, 2) <= _radius*_radius) {
+			if (t3 < t){
+				t = t3;
+				sides = false;
+			}
+		}
 	}
 
 	if (t != DBL_MAX && t>0.00000001){
 		vec3 ray_isect = ray.origin + ray.direction*(decimal)t;
-		vec3 normal = normalize(ray_isect - _base_center);
-		std::unique_ptr<struct Intersection> isect(new Intersection{ ray, ray_isect, normal, vec2(0), _material });
+		vec3 normal = calculateNormal(ray_isect, sides);
+		vec2 uv;
+		if (sides) uv = calculateUVCylinder(ray_isect - _center);
+		else{	
+			//std::cout << "base center is " << (ray_isect - _base_center).x << " " << (ray_isect - _base_center).y << " " << (ray_isect - _base_center).z << std::endl;
+			uv = calculateUVCircle(ray_isect - _base_center);
+		}
+		std::unique_ptr<struct Intersection> isect(new Intersection{ ray, ray_isect, normal, uv, _material });
 		return std::move(isect);
 	}
 	return nullptr;
 }
 //https://github.com/Penetra/CG-Project/blob/master/Cone.cpp
-void Cone::calculateNormal(vec3 &hitPoint, vec3 &normal){
+vec3 Cone::calculateNormal(vec3 &hitPoint, bool sides) const{
 	//PAS COMPLETER ENCORE, JAI JUSTE COPY PASTE UNE FONCTION, QUE JAI LEGEREMENT MODIFIE
-
-	if (hitPoint.y == _base_center.y) {
-		normal.x = 0;
-		normal.y = -1;
-		normal.z = 0;
-	}
+	vec3 normal;
+	if (!sides) normal = normalize(_base_center-_apex);
 	else {
 		double e = -(_radius*_radius) / (_height*_height);
 		normal.x = hitPoint.x - _base_center.x;
@@ -333,6 +353,7 @@ void Cone::calculateNormal(vec3 &hitPoint, vec3 &normal){
 		normal.y *= e;
 		normal = normalize(normal);
 	}
+	return normal;
 }
 
 int plane_Intersection(const Ray& ray, vec3 normal, vec3 point, double &t){
