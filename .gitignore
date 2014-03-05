@@ -3,6 +3,7 @@ S junk files
 *.DS_Store
 *.ppm
 *.scn
+/vs12/rtbase/image.ppm
 #Visual Studio files
 *.[Oo]bj
 *.user
