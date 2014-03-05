@@ -57,14 +57,6 @@ protected:
 	vec3 _max;
 	vec3 _center;
 	std::array<vec3, 8> points;
-	std::array<vec3, 8> init_points;
-	std::array<float, 3> extents;
-	//Repere d'axes
-	std::array<vec3, 3> normals;
-	void SetCenter();
-	void SetNormals();
-	void SetExtents();
-	void SetAABB();
 	std::vector<vec3>_faces_points;
 	
 
@@ -96,7 +88,6 @@ protected:
 	vec3 _base_center;
 	vec3 _apex;
 	vec3 _direction;
-	decimal _theta;
 	decimal _radius;
 	decimal _height;
 	
