@@ -66,13 +66,9 @@ Box::Box(vec3 position, vec3 orientation, vec3 scaling, Material* mtl)
 	vec3 corner_rtr{ corner_rbl.x, corner_ftr.y, corner_ftr.z };//5
 	vec3 corner_rtl{ corner_rbl.x, corner_ftr.y, corner_rbl.z };//6
 	vec3 corner_rbr{ corner_rbl.x, corner_rbl.y, corner_ftr.z };//7
-	init_points = { { corner_ftr, corner_rbl, corner_fbr, corner_ftl, corner_fbl, corner_rtr, corner_rtl, corner_rbr } };
-	for (int i = 0; i < 8; i++){
-		vec4 v4(init_points[i], 1);
-		v4 = (_modelTransform*v4);
-		vec3 v3(v4);
-		points[i] = v3;
-	}
+
+	points = { { corner_ftr, corner_rbl, corner_fbr, corner_ftl, corner_fbl, corner_rtr, corner_rtl, corner_rbr } };
+	
 	SetCenter();
 	SetNormals();
 	SetExtents();
@@ -83,12 +79,7 @@ Box::Box(vec3 position, vec3 orientation, vec3 scaling, Material* mtl)
 	_faces_points.push_back(vec3(-1.0f, 0.0f, 0.0f));
 	_faces_points.push_back(vec3(0.0f, -1.0f, 0.0f));
 	_faces_points.push_back(vec3(0.0f, 0.0f, -1.0f));
-
-	for (uint i = 0; i < _faces_points.size(); i++){
-		vec4 current = vec4(_faces_points[i], 1.0f);
-		current =  _modelTransform*current;
-		_faces_points[i] = vec3(current);
-	}
+	
 	
 }
 
@@ -219,13 +210,11 @@ std::unique_ptr<struct Intersection> Box::intersect(const struct Ray& ray, decim
 
 Cylinder::Cylinder(vec3 position, vec3 orientation, vec3 scaling, Material* mtl)
 :Geometry(position, orientation, scaling, mtl){
-	_center = vec3(_modelTransform*vec4(0.0,0,0,1));
-	_p = vec3(_modelTransform*vec4(0.0, 1, 0,1));
-	_q = vec3(_modelTransform*vec4(0.0, -1, 0, 1));
-	_height = scaling.y*2;
-	_radius = 1*scaling.x;
-
-	
+	_center =vec3(0.0,0,0);
+	_p = vec3(0.0, 1, 0);
+	_q = vec3(0.0, -1, 0);
+	_radius = 1;
+	_height = 2;
 	//TODO implementer constructeur cylindre
 }
 
@@ -238,7 +227,6 @@ https://code.google.com/p/pwsraytracer/source/browse/trunk/raytracer/cylinder.cp
 	//il reussi quand mm a pogner la lumiere
 	double tmin = INFINITY;
 	double t = DBL_MAX, t1 = DBL_MAX, t2 = DBL_MAX, t3 = DBL_MAX;
-	double ttemp = 0;
 	bool sides = false;
 	double ox = ray.origin.x - _center.x;
 	double oy = ray.origin.y - _center.y;
@@ -250,21 +238,17 @@ https://code.google.com/p/pwsraytracer/source/browse/trunk/raytracer/cylinder.cp
 	double b = 2.0 * (ox * dx + oz * dz);
 	double c = ox * ox + oz * oz - _radius * _radius;
 	double D = b * b - 4.0 * a * c;
-	if (D < 0.0)
-	{
+	if (D < 0.0){
 		//No hitpoints
 		return nullptr;
 	}
-	else
-	{
+	else{
 		double sqrtD = sqrt(D);
 		double aa = a * 2;
 		double t1 = (-b - sqrtD) / aa;
-		if (t1 > epsilon<double>())
-		{
+		if (t1 > epsilon<double>()){
 			double y = oy + t1 * dy;
-			if (y > _q.y && y < _p.y)
-			{
+			if (y > _q.y && y < _p.y){
 				if (t1 < t) {
 					t = t1;
 					//WARNING
@@ -275,12 +259,9 @@ https://code.google.com/p/pwsraytracer/source/browse/trunk/raytracer/cylinder.cp
 			}
 		}
 		t2 = (-b + sqrtD) / aa;
-		if (t2 >  epsilon<double>())
-		{
+		if (t2 >  epsilon<double>()){
 			double y = oy + t2 * dy;
-			if (y > _q.y && y < _p.y)
-			{
-				
+			if (y > _q.y && y < _p.y){
 				if (t2 < t){
 					t = t2;
 					sides = true;
@@ -321,9 +302,7 @@ vec3 Cylinder::calculateNormal(vec3& hitPoint, bool sides)const{
 		normal = normalize(_p-_center);
 	}
 	else {
-		//std::cout << "p is " << _p.x <<" "<<_p.y<<" "<<_p.z << " q is " << _q.x<<" "<<_q.y<<" "<<_q.z << std::endl;
 		vec3 direction = normalize(_p - _q);
-		//std::cout << "normal is " << direction.x << " " << direction.y << " " << direction.z;
 		vec3 x = _q + (dot((hitPoint - _q), direction))*direction;
 		normal = normalize(hitPoint - x);
 	}
@@ -336,9 +315,9 @@ Cone::Cone(vec3 position, vec3 orientation, vec3 scaling, Material* mtl)
 	_radius = 1.0;
 	_apex = vec3(0.0, 2, 0);
 	_base_center = vec3(0.0, 0, 0); 
-	_direction = normalize(_base_center - _apex);
+	_direction = vec3(0,1,0);
 	_theta = atan(_radius / length(_base_center - _apex));
-	_height = length(_base_center - _apex);
+	_height = 1;
 	
 	std::cout << _theta;
 }
@@ -402,13 +381,13 @@ std::unique_ptr<struct Intersection> Cone::intersect(const struct Ray& ray, deci
 //https://github.com/Penetra/CG-Project/blob/master/Cone.cpp
 void Cone::calculateNormal(vec3 &hitPoint, vec3 &normal){
 	//PAS COMPLETER ENCORE, JAI JUSTE COPY PASTE UNE FONCTION, QUE JAI LEGEREMENT MODIFIE
-	/*printf("%lf\n",hitPoint.y);*/
-	if (hitPoint.y == _base_center.y) { /* Hit the bottom */
+
+	if (hitPoint.y == _base_center.y) {
 		normal.x = 0;
 		normal.y = -1;
 		normal.z = 0;
 	}
-	else { /* Hit the side */
+	else {
 		double e = -(_radius*_radius) / (_height*_height);
 		normal.x = hitPoint.x - _base_center.x;
 		normal.y = hitPoint.y - _base_center.y - _height;
