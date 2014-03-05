@@ -57,9 +57,9 @@ protected:
 	vec3 _center;
 	std::array<vec3, 8> points;
 	std::array<vec3, 8> init_points;
-	std::array<float, 3> e;
+	std::array<float, 3> extents;
 	//Repere d'axes
-	std::array<vec3, 3> u;
+	std::array<vec3, 3> normals;
 	void SetCenter();
 	void SetNormals();
 	void SetExtents();

@@ -107,14 +107,14 @@ void Box::SetCenter(){
 	_center.z = resultZ.first->z + (resultZ.second->z - resultZ.first->z) / 2;
 }
 void Box::SetNormals(){
-	u.at(0) = normalize(points.at(4) - points.at(1)); //axe des x
-	u.at(1) = normalize(points.at(6) - points.at(1)); //axe des y
-	u.at(2) = normalize(points.at(7) - points.at(1)); //axe des z
+	normals.at(0) = normalize(points.at(4) - points.at(1)); //axe des x
+	normals.at(1) = normalize(points.at(6) - points.at(1)); //axe des y
+	normals.at(2) = normalize(points.at(7) - points.at(1)); //axe des z
 }
 void Box::SetExtents(){
-	e.at(0) = glm::length(points.at(4) - points.at(1)) / 2; //fbl-rbl
-	e.at(1) = glm::length(points.at(6) - points.at(1)) / 2; //axe des y
-	e.at(2) = glm::length(points.at(7) - points.at(1)) / 2; //axe des z
+	extents.at(0) = glm::length(points.at(4) - points.at(1)) / 2; //fbl-rbl
+	extents.at(1) = glm::length(points.at(6) - points.at(1)) / 2; //axe des y
+	extents.at(2) = glm::length(points.at(7) - points.at(1)) / 2; //axe des z
 }
 
 std::unique_ptr<struct Intersection> Box::intersect(const struct Ray& ray, decimal &currentdepth) const{
@@ -125,16 +125,16 @@ std::unique_ptr<struct Intersection> Box::intersect(const struct Ray& ray, decim
 	vec3 diff = _center - ray.origin;
 
 	for (int i = 0; i < 3; ++i){
-		vec3 axis = u[i];
+		vec3 axis = normals[i];
 		float et = dot(axis,diff);
 		float f = dot(ray.direction,axis);
 		if (f==0){
-			if (-et - e[i] > 0.0f || -et + e[i] > 0.0f)
+			if (-et - extents[i] > 0.0f || -et + extents[i] > 0.0f)
 				return false;
 			continue;
 		}
-		float s = (et - e[i]) / f;
-		float t = (et + e[i]) / f;
+		float s = (et - extents[i]) / f;
+		float t = (et + extents[i]) / f;
 		if (s > t){
 			float temp = s;
 			s = t;
@@ -147,7 +147,7 @@ std::unique_ptr<struct Intersection> Box::intersect(const struct Ray& ray, decim
 		if (minT < 0.0f || maxS > minT)
 			return false;
 	}
-	vec3 ray_isect = ray.origin + ray.direction* (decimal)maxS;
+	vec3 ray_isect = ray.origin + ray.direction * (decimal)maxS;
 	//calcul de la normale
 	decimal min_face_dist = INFINITY;
 	uint index;
@@ -159,7 +159,57 @@ std::unique_ptr<struct Intersection> Box::intersect(const struct Ray& ray, decim
 		}
 	}
 	vec3 normal = normalize(_faces_points[index] - _center);
-	std::unique_ptr<struct Intersection> isect(new Intersection{ ray, ray_isect, normal, vec2(0), _material });
+
+	// Calcul des coordonees uv	
+	
+	vec3 uv_coord_0_0;
+	vec3 uv_coord_1_0;
+	vec3 uv_coord_0_1;
+
+	if (index == 0) {
+		uv_coord_0_0 = points[4];
+		uv_coord_1_0 = points[2];
+		uv_coord_0_1 = points[3];
+	}
+
+	if (index == 1) {
+		uv_coord_0_0 = points[3];
+		uv_coord_1_0 = points[0];
+		uv_coord_0_1 = points[6];
+	}
+
+	if (index == 2) {
+		uv_coord_0_0 = points[2];
+		uv_coord_1_0 = points[7];
+		uv_coord_0_1 = points[0];
+	}
+
+	if (index == 3) {
+		uv_coord_0_0 = points[1];
+		uv_coord_1_0 = points[7];
+		uv_coord_0_1 = points[6];
+	}
+
+	if (index == 4) {
+		uv_coord_0_0 = points[1];
+		uv_coord_1_0 = points[7];
+		uv_coord_0_1 = points[4];
+	}
+
+	if (index == 5) {
+		uv_coord_0_0 = points[1];
+		uv_coord_1_0 = points[4];
+		uv_coord_0_1 = points[6];
+	}
+	
+	decimal u = glm::length(glm::cross((ray_isect - uv_coord_0_0), (ray_isect - uv_coord_1_0))) / glm::length(uv_coord_1_0 - uv_coord_0_0);
+	//std::cout << u << std::endl;
+	decimal v = glm::length(glm::cross((ray_isect - uv_coord_0_0), (ray_isect - uv_coord_0_1))) / glm::length(uv_coord_0_1 - uv_coord_0_0);
+	//std::cout << v << std::endl;
+
+	vec2 uv = glm::vec2(u, v);
+
+	std::unique_ptr<struct Intersection> isect(new Intersection{ ray, ray_isect, normal, uv, _material });
 	return std::move(isect);
 }
 
