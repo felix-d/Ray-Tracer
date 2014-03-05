@@ -25,6 +25,7 @@ protected:
 	vec3 _orientation;
 	vec3 _scaling;
 	mat4 _modelTransform;
+	mat4 _inv_modelTransform;
 	Material* _material;
 
 	// Transform order: scaling, then rotation, then translation (use glm methods)
