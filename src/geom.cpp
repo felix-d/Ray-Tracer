@@ -26,11 +26,9 @@ _material(mtl)
 
 Sphere::Sphere(vec3 position, vec3 orientation, vec3 scaling, Material* mtl)
 :Geometry(position, orientation, scaling, mtl){
-    //TODO implementer constructeur Sphere
-    //L'equation de la sphere est donnee par (X-C).(X-C)=r^2
-    //C est est le centre et r est le rayon
-	_radius = 1.0f;
-	_center = position;
+
+	_radius = scaling.x;
+	_center = vec3(_modelTransform * vec4(0.0f, 0.0f, 0.0f, 1.0f));
 	
 }
 
@@ -215,9 +213,9 @@ std::unique_ptr<struct Intersection> Box::intersect(const struct Ray& ray, decim
 
 Cylinder::Cylinder(vec3 position, vec3 orientation, vec3 scaling, Material* mtl)
 :Geometry(position, orientation, scaling, mtl){
-	_center = vec3(_modelTransform*vec4(0.0,0,0,1));
-	_p = vec3(_modelTransform*vec4(0.0, 1, 0,1));
-	_q = vec3(_modelTransform*vec4(0.0, -1, 0, 1));
+	_center = vec3(_modelTransform * vec4(0.0f, 0.0f, 0.0f, 1.0f));
+	_p = vec3(_modelTransform*vec4(0.0f, 1.0f, 0.0f, 1.0f));
+	_q = vec3(_modelTransform*vec4(0.0f, -1.0f, 0.0f, 1.0f));
 	_height = scaling.y*2;
 	_radius = 1*scaling.x;
 
@@ -312,14 +310,21 @@ https://code.google.com/p/pwsraytracer/source/browse/trunk/raytracer/cylinder.cp
 
 Cone::Cone(vec3 position, vec3 orientation, vec3 scaling, Material* mtl)
 :Geometry(position, orientation, scaling, mtl){
-	_radius = 1.0;
-	_apex = vec3(0.0, 2, 0);
-	_base_center = vec3(0.0, 0, 0); 
+	_radius = scaling.x;
+
+	_apex = position + vec3(0.0f, 2.0f, 0.0f);
+	vec4 apex_v4(_apex, 1);
+	apex_v4 = _modelTransform * apex_v4;
+	_apex = vec3(apex_v4);
+
+	_base_center = position;
+	vec4 base_center_v4(_base_center, 1);
+	base_center_v4 = _modelTransform * base_center_v4;
+	_base_center = vec3(base_center_v4);
+
 	_direction = normalize(_base_center - _apex);
 	_theta = atan(_radius / length(_base_center - _apex));
 	_height = length(_base_center - _apex);
-	
-	std::cout << _theta;
 }
 
 std::unique_ptr<struct Intersection> Cone::intersect(const struct Ray& ray, decimal &currentdepth) const{
