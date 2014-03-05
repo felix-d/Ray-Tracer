@@ -24,61 +24,75 @@
 
 
 //https://code.google.com/p/pwsraytracer/source/browse/trunk/raytracer/
-//Jai juste tout ecrit ce qui a dans le header, jai fait les constructeurs etc..
 Geometry::Geometry(vec3 position, vec3 orientation, vec3 scaling, Material* mtl)
 :_position(position),
 _orientation(orientation),
 _scaling(scaling),
 _material(mtl)
-{
-	
+{	
 	mat4 translation_mat = glm::translate(mat4(), position);
 	mat4 scaling_mat = glm::scale(mat4(), scaling);
 	mat4 orientation_mat = glm::orientate4(orientation);
+
 	_modelTransform ={
 		translation_mat*
 		orientation_mat*
 		scaling_mat
 	};
-	
+
+	_inv_modelTransform = glm::inverse(_modelTransform);
 }
 
 Sphere::Sphere(vec3 position, vec3 orientation, vec3 scaling, Material* mtl)
 :Geometry(position, orientation, scaling, mtl){
-    //TODO implementer constructeur Sphere
-    //L'equation de la sphere est donnee par (X-C).(X-C)=r^2
-    //C est est le centre et r est le rayon
 	_radius = 1.0f;
+	//_center = vec3(0.0f);	
 	_center = position;
-	
 }
 
-std::unique_ptr<struct Intersection> Sphere::intersect(const struct Ray& ray, decimal &currentdepth) const{
-   
-	vec3 m = ray.origin - _center;
-	decimal b = glm::dot(m, ray.direction);
+std::unique_ptr<struct Intersection> Sphere::intersect(const struct Ray& ray, decimal &currentdepth) const{  
+	vec3 ray_origin = vec3(_inv_modelTransform * vec4(ray.origin, 1.0f));
+	vec3 ray_direction = vec3(_inv_modelTransform * vec4(ray.direction, 0.0f));
+	
+	/*
+	vec3 m = ray_origin - _center;
+	decimal b = glm::dot(m, ray_direction);
 	decimal c = glm::dot(m, m) - _radius * _radius;
 	if (c > 0.0f && b > 0.0f)
 		return nullptr;
+
 	decimal discr = b * b - c;
 	if (discr < 0.0f)
 		return nullptr;
+
 	decimal t = -b - sqrt(discr);
 	if (t < 0.0f)
 		t = 0.0f;
-	vec3 ray_isect = ray.origin + t * ray.direction;
-	vec3 normal = glm::normalize(ray_isect - _center);
+	*/
+		
+	float a = glm::dot(ray_direction, ray_direction);
+	float b = 2 * glm::dot(ray_origin, ray_direction);
+	float c = glm::dot(ray_origin, ray_origin) - _radius * _radius;
+	float t0, t1;
+	if (!solveQuadratic(a, b, c, t0, t1) || t1 < 0)
+		return nullptr;
+	if (t1 < t0)
+		std::swap(t0, t1);
+	double t = (t0 < 0) ? (double)t1 : (double)t0;
+
+	vec3 ray_isect = vec3(_modelTransform * vec4(ray_origin + t * ray_direction, 1.0f));
+	vec3 normal = glm::normalize((vec3(glm::transpose(_inv_modelTransform) * vec4(glm::normalize(ray_isect - _center), 0.0f))));
 	vec2 uv = calculateUVSphere(normal);
+
 	std::unique_ptr<struct Intersection> isect(new Intersection{ ray, ray_isect, normal, uv, _material });
 	return std::move(isect);
-    
 }
 
 Box::Box(vec3 position, vec3 orientation, vec3 scaling, Material* mtl)
 :Geometry(position, orientation, scaling, mtl){
-	_center = vec3(0, 0, 0);
-	_min = vec3(-1.0, -1, -1);
-	_max = vec3(1.0, 1, 1);
+	_center = vec3(0.0f, 0.0f, 0.0f);
+	_min = vec3(-1.0f, -1.0f, -1.0f);
+	_max = vec3(1.0f, 1.0f, 1.0f);
 
 	vec3 corner_ftr{ 1, 1, 1 };//0
 	vec3 corner_rbl{-1, -1, -1 };//1
@@ -88,23 +102,20 @@ Box::Box(vec3 position, vec3 orientation, vec3 scaling, Material* mtl)
 	vec3 corner_rtr{ corner_rbl.x, corner_ftr.y, corner_ftr.z };//5
 	vec3 corner_rtl{ corner_rbl.x, corner_ftr.y, corner_rbl.z };//6
 	vec3 corner_rbr{ corner_rbl.x, corner_rbl.y, corner_ftr.z };//7
+
 	points = { { corner_ftr, corner_rbl, corner_fbr, corner_ftl,
 		corner_fbl, corner_rtr, corner_rtl, corner_rbr } };
+
 	_faces_points.push_back(vec3(1.0f, 0.0f, 0.0f));
 	_faces_points.push_back(vec3(0.0f, 1.0f, 0.0f));
 	_faces_points.push_back(vec3(0.0f, 0.0f, 1.0f));
 	_faces_points.push_back(vec3(-1.0f, 0.0f, 0.0f));
 	_faces_points.push_back(vec3(0.0f, -1.0f, 0.0f));
 	_faces_points.push_back(vec3(0.0f, 0.0f, -1.0f));
-	
 }
 
 
-
-
 std::unique_ptr<struct Intersection> Box::intersect(const struct Ray& ray, decimal &currentdepth) const{
-
-	
 	float t1 = (_min.x - ray.origin.x)*(1.0 / ray.direction.x);
 	float t2 = (_max.x - ray.origin.x)*(1.0 / ray.direction.x);
 	float t3 = (_min.y - ray.origin.y)*(1.0 / ray.direction.y);
