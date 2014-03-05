@@ -174,9 +174,9 @@ std::unique_ptr<struct Intersection> Box::intersect(const struct Ray& ray, decim
 	vec3 uv_coord_0_1;
 
 	if (index == 0) {
-		uv_coord_0_0 = points[2];
-		uv_coord_1_0 = points[7];
-		uv_coord_0_1 = points[0];
+		uv_coord_0_0 = points[4];
+		uv_coord_1_0 = points[2];
+		uv_coord_0_1 = points[3];
 	}
 
 	if (index == 1) {
@@ -186,9 +186,9 @@ std::unique_ptr<struct Intersection> Box::intersect(const struct Ray& ray, decim
 	}
 
 	if (index == 2) {
-		uv_coord_0_0 = points[4];
-		uv_coord_1_0 = points[5];
-		uv_coord_0_1 = points[6];
+		uv_coord_0_0 = points[2];
+		uv_coord_1_0 = points[7];
+		uv_coord_0_1 = points[0];
 	}
 
 	if (index == 3) {
@@ -204,9 +204,9 @@ std::unique_ptr<struct Intersection> Box::intersect(const struct Ray& ray, decim
 	}
 
 	if (index == 5) {
-		uv_coord_0_0 = points[6];
-		uv_coord_1_0 = points[5];
-		uv_coord_0_1 = points[1];
+		uv_coord_0_0 = points[1];
+		uv_coord_1_0 = points[4];
+		uv_coord_0_1 = points[6];
 	}
 	
 	decimal u = glm::length(glm::cross((ray_isect - uv_coord_0_0), (ray_isect - uv_coord_1_0))) / glm::length(uv_coord_1_0 - uv_coord_0_0);
