@@ -4,7 +4,7 @@
 #include <array>
 #include "../vs12/rtbase/utils.h"
 
-int plane_Intersection(const Ray& ray, vec3 normal, vec3 point, double &t);
+int plane_Intersection(vec3 ray_origin, vec3 ray_direction, vec3 normal, vec3 point, double &t);
 vec2 calculateUVSphere(const vec3& point);
 vec2 calculateUVCylinder(const vec3& point);
 vec2 calculateUVCircle(const vec3& point);
