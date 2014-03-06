@@ -1,18 +1,19 @@
 #pragma once
 #include "../../include/geom.h"
 
-class Cylinder : public Geometry
+class Cone : public Geometry
 {
 public:
-	Cylinder(vec3 position, vec3 orientation, vec3 scaling, Material* mtl = new Material());
-
+	Cone(vec3 position, vec3 orientation, vec3 scaling, Material* mtl = new Material());
+	vec3 Cone::calculateNormal(vec3& hitPoint, bool sides)const;
 	virtual std::unique_ptr<struct Intersection> intersect(const struct Ray& ray, decimal &currentdepth) const override;
-	vec3 calculateNormal(vec3& hitPoint, bool sides) const;
 protected:
+	vec3 _base_center;
+	vec3 _apex;
+	vec3 _direction;
 	vec3 _center;
-	vec3 _p;
-	vec3 _q;
 	decimal _radius;
 	decimal _height;
-
 };
+
+

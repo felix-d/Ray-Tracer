@@ -18,6 +18,7 @@
     <ClCompile Include="..\..\src\scene.cpp" />
     <ClCompile Include="..\..\src\texture.cpp" />
     <ClCompile Include="box.cpp" />
+    <ClCompile Include="cone.cpp" />
     <ClCompile Include="cylinder.cpp" />
     <ClCompile Include="sphere.cpp" />
   </ItemGroup>
@@ -30,6 +31,7 @@
     <ClInclude Include="..\..\include\scene.h" />
     <ClInclude Include="..\..\include\texture.h" />
     <ClInclude Include="box.h" />
+    <ClInclude Include="cone.h" />
     <ClInclude Include="cylinder.h" />
     <ClInclude Include="sphere.h" />
     <ClInclude Include="utils.h" />

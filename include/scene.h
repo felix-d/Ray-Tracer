@@ -3,7 +3,11 @@
 #include <unordered_map>
 
 #include <basic_structs.h>
-#include <geom.h>
+//#include <geom.h>
+#include "../vs12/rtbase/sphere.h"
+#include "../vs12/rtbase/cone.h"
+#include "../vs12/rtbase/box.h"
+#include "../vs12/rtbase/cylinder.h"
 
 class Scene
 {

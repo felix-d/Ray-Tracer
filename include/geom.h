@@ -33,66 +33,6 @@ protected:
 	// Hint: preprocess any modified matrices you might need (like the inverse)
 };
 
-class Sphere : public Geometry
-{
-public:
-	Sphere(vec3 position, vec3 orientation, vec3 scaling, Material* mtl = new Material());
 
-	//const after a function declaration means that the function is not allowed to 
-	//change any class members(except ones that are marked mutable)
-	virtual std::unique_ptr<struct Intersection> intersect(const struct Ray& ray, decimal &currentdepth) const override;
-protected:
-	decimal _radius;
-	vec3 _center;
-	
-};
 
-class Box : public Geometry
-{
-public:
-	Box(vec3 position, vec3 orientation, vec3 scaling, Material* mtl = new Material());
-
-	virtual std::unique_ptr<struct Intersection> intersect(const struct Ray& ray, decimal &currentdepth) const override;
-protected:
-	vec3 _min;
-	vec3 _max;
-	vec3 _center;
-	std::array<vec3, 8> points;
-	std::vector<vec3>_faces_points;
-	
-
-};
-
-class Cylinder : public Geometry
-{
-public:
-	Cylinder(vec3 position, vec3 orientation, vec3 scaling, Material* mtl = new Material());
-
-	virtual std::unique_ptr<struct Intersection> intersect(const struct Ray& ray, decimal &currentdepth) const override;
-	vec3 calculateNormal(vec3& hitPoint, bool sides) const;
-protected:
-	vec3 _center;
-	vec3 _p;
-	vec3 _q;
-	decimal _radius;
-	decimal _height;
-;
-};
-
-class Cone : public Geometry
-{
-public:
-	Cone(vec3 position, vec3 orientation, vec3 scaling, Material* mtl = new Material());
-	vec3 Cone::calculateNormal(vec3& hitPoint, bool sides)const;
-	virtual std::unique_ptr<struct Intersection> intersect(const struct Ray& ray, decimal &currentdepth) const override;
-protected:
-	vec3 _base_center;
-	vec3 _apex;
-	vec3 _direction;
-	vec3 _center;
-	decimal _radius;
-	decimal _height;
-	
-	
-};
 
