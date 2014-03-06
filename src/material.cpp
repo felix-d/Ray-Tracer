@@ -15,7 +15,9 @@ vec3 Material::shade(const Intersection* isect, uint8_t depth) const {
 	////initialisation de la position du shadow ray
 	vec3 shadow_ray_origin = isect->position + bias * isect->normal;
 
-	for (uint i = 0; i < lights.size(); i++){
+	uint nb_lights = lights.size();
+
+	for (uint i = 0; i < nb_lights; i++){
 		bool inShadow;
 		//Direction du shadow ray
 		vec3 shadow_ray_direction = glm::normalize(lights.at(i)->positionOrDirection-shadow_ray_origin);
@@ -29,7 +31,7 @@ vec3 Material::shade(const Intersection* isect, uint8_t depth) const {
 		if (!inShadow)
 			total_light += this->shadeLight(isect, lights[i].get(), depth);		
 	}
-	return total_light;
+	return total_light / (double)nb_lights;
 	
 }
 
