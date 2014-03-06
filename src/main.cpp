@@ -13,31 +13,8 @@ inline int discrete(decimal v, decimal max_val)
 	return int(min(v * max_val, 255.0));
 }
 
-std::vector<vec3> superSampling(const uint& samples, const uint& x_pixel, const uint& y_pixel, const Scene& scene, const decimal& width, const decimal& height) {
-	decimal angle = tan(scene.fov() / 2);
-	decimal invWidth = 1 / (decimal)width, invHeight = 1 / (decimal)height;
-	decimal aspectratio = (decimal)width / (decimal)height;
-	std::vector<vec3> points;
-	std::vector<decimal>xxs, yys;
-	float samples2 = pow(samples, 2);
-	for (uint k = 0; k < samples; k++){
-		decimal indice;
-		if (k != 0)
-			indice = (k*samples + (k + 1)*samples) / (2 * samples2);
-		else indice = samples / (2 * samples2);
-		xxs.push_back((2 * ((x_pixel + indice) * invWidth) - 1) * angle * aspectratio);
-		yys.push_back((1-2 * ((y_pixel + indice) * invHeight)) * angle);
-	}
-	for (uint k = 0; k < xxs.size(); k++){
-		for (uint h = 0; h < yys.size(); h++){
-			vec4 p_homog = scene.cameraMatrix() * vec4{xxs[k],yys[h],-1,1};
-			points.push_back(vec3(p_homog));
-		}
-	}
-	return points;
-}
-
-
+std::vector<vec3> superSampling(const uint& samples, const uint& x_pixel, const uint& y_pixel, 
+	const Scene& scene, const decimal& width, const decimal& height);
 
 int main(int argc, const char* argv[])
 {
@@ -144,4 +121,30 @@ int main(int argc, const char* argv[])
 	std::cin >> quit;
 
 	return 0;
+}
+
+
+std::vector<vec3> superSampling(const uint& samples, const uint& x_pixel, const uint& y_pixel, 
+	const Scene& scene, const decimal& width, const decimal& height) {
+	decimal angle = tan(scene.fov() / 2);
+	decimal invWidth = 1 / (decimal)width, invHeight = 1 / (decimal)height;
+	decimal aspectratio = (decimal)width / (decimal)height;
+	std::vector<vec3> points;
+	std::vector<decimal>xxs, yys;
+	float samples2 = pow(samples, 2);
+	for (uint k = 0; k < samples; k++){
+		decimal indice;
+		if (k != 0)
+			indice = (k*samples + (k + 1)*samples) / (2 * samples2);
+		else indice = samples / (2 * samples2);
+		xxs.push_back((2 * ((x_pixel + indice) * invWidth) - 1) * angle * aspectratio);
+		yys.push_back((1 - 2 * ((y_pixel + indice) * invHeight)) * angle);
+	}
+	for (uint k = 0; k < xxs.size(); k++){
+		for (uint h = 0; h < yys.size(); h++){
+			vec4 p_homog = scene.cameraMatrix() * vec4{ xxs[k], yys[h], -1, 1 };
+			points.push_back(vec3(p_homog));
+		}
+	}
+	return points;
 }
