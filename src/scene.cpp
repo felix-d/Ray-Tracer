@@ -123,7 +123,7 @@ Scene::Scene(const char* file)
 			iss >> l->color >> l->positionOrDirection;
 
 			if (l->directional())
-				//l->positionOrDirection = normalize(l->positionOrDirection);
+				l->positionOrDirection = normalize(l->positionOrDirection);
 
 			_lights.push_back(std::unique_ptr<Light>(l));
 		}

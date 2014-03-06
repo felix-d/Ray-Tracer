@@ -10,18 +10,20 @@ vec3 Material::shade(const Intersection* isect, uint8_t depth) const {
 	vec3 shadow_ray_origin = isect->position + bias * isect->normal;
 	uint nb_lights = lights.size();
 
+
+
 	for (uint i = 0; i < nb_lights; i++){
 		bool inShadow;
 		vec3 shadow_ray_direction = glm::normalize(lights.at(i)->positionOrDirection-shadow_ray_origin);
 		Ray shadow_ray = Ray{ shadow_ray_origin, shadow_ray_direction };
-		if (isect->scene->trace(shadow_ray, 1) == nullptr)
+		if (isect->scene->trace(shadow_ray, 1) == nullptr || lights.at(i)->type >= lights.at(i)->NO_SHADOWS)
 			inShadow = false;
 		else
 			inShadow = true;
-		//if (!inShadow)
-			total_light += this->shadeLight(isect, lights[i].get(), 1);
+		if (!inShadow)
+			total_light += this->shadeLight(isect, lights[i].get(), depth);		
 	}
-	return total_light;
+	return total_light / (double)nb_lights;
 }
 
 //NE PAS OUBLIER QUE LES LUMIERES DIRECTIONNELLES SONT NORMALISEES DANS SCENE.cpp
@@ -46,7 +48,17 @@ vec3 Material::shadeLight(const Intersection* isect, const Light* l, uint8_t dep
 
 
 vec3 MaterialLambert::shadeLight(const Intersection* isect, const Light* l, uint8_t depth) const {
-	return vec3(1);
+	double lambert = max(glm::dot(l->positionOrDirection, isect->normal), 0.0);
+	vec3 color;
+
+	if (l->directional())
+		color = lambert * (_color / glm::pi<double>()) * l->color;
+	else {
+		double dist = glm::length(l->positionOrDirection - isect->position);
+		color = lambert * (_color / glm::pi<double>()) * (l->color / pow(dist, 2));
+	}
+
+	return color;
 }
 
 
