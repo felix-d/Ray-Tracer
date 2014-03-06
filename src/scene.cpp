@@ -55,7 +55,7 @@ Scene::Scene(const char* file)
 		_LOG_CRIT() << "Could not open scene file '" << file << "'!" << std::endl;
 
 	_discretization = 100;
-	_maxDepth = 2;
+	_maxDepth = 20;
 
 	for (std::string line; getline(f, line);)
 	{
@@ -121,7 +121,7 @@ Scene::Scene(const char* file)
 				l->type |= Light::NO_SHADOWS;
 
 			iss >> l->color >> l->positionOrDirection;
-
+			std::cout << "la light est " << l->color.r << " "<<l->color.g <<" "<< l->color.b << std::endl;
 			if (l->directional())
 				l->positionOrDirection = normalize(l->positionOrDirection);
 

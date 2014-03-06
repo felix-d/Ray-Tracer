@@ -19,6 +19,7 @@ protected:
 	virtual vec3 shadeLight(const Intersection* isect, const Light* l, uint8_t depth) const;
 	std::unique_ptr<Texture> _texture;
 	vec2 _tiling;
+	
 };
 
 class MaterialLambert : public Material

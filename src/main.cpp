@@ -35,9 +35,9 @@ int main(int argc, const char* argv[])
 	std::string outfilename = "image.ppm";
 	std::string infilename = "../../scenes/interreflect.scn";
 
-	uint width = 640;
-	uint height = 480;
-	uint samples = 1;
+	uint width = 1500;
+	uint height = 1200;
+	uint samples = 2;
 
 	// Simple tokenization scheme
 	{
@@ -93,7 +93,7 @@ int main(int argc, const char* argv[])
 	// Step 2: Initialize render data //
 	////////////////////////////////////
 
-	uint8_t max_depth = 3;//scene.maxDepth();
+	uint8_t max_depth = 5;//scene.maxDepth();
 	current_depth = max_depth;
 	vec3 origin = vec3(scene.cameraMatrix() * glm::vec4(0.0f, 0, 0, 1));
 	uint image_pos = 0;
@@ -118,7 +118,7 @@ int main(int argc, const char* argv[])
 				if (isect == nullptr) rgbs.push_back(scene.background());
 				else {
 					rgbs.push_back(isect->material->shade(isect.get(), max_depth));
-					//std::cout << (int)max_depth << std::endl;
+					//if((int)currentDepth()<10)std::cout << (int)currentDepth() << std::endl;
 				}
 				resetCurrentDepth(max_depth);
 			}
