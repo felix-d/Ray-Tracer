@@ -14,12 +14,14 @@ _material(mtl)
 {	
 	mat4 translation_mat = glm::translate(mat4(), position);
 	mat4 scaling_mat = glm::scale(mat4(), scaling);
-	mat4 orientation_mat = glm::orientate4(orientation);
-
+	mat4 rotateX = glm::rotate(mat4(), orientation.x, vec3(1,0,0));
+	mat4 rotateY = glm::rotate(mat4(), orientation.y, vec3(0, 1, 0));
+	mat4 rotateZ = glm::rotate(mat4(), orientation.z, vec3(0, 0, 1));
 	_modelTransform ={
 		translation_mat*
-		orientation_mat*
-		scaling_mat
+		
+		scaling_mat*
+		rotateX*rotateY*rotateZ
 	};
 
 	_inv_modelTransform = glm::inverse(_modelTransform);
@@ -47,8 +49,9 @@ std::unique_ptr<struct Intersection> Sphere::intersect(const struct Ray& ray, de
 
 	vec3 ray_isect = ray_origin + t * ray_direction;
 	vec3 normal = glm::normalize(ray_isect);
-	normal = glm::normalize((vec3(glm::transpose(_inv_modelTransform) * vec4(normal, 0.0f))));
 	vec2 uv = calculateUVSphere(normal);
+	normal = glm::normalize((vec3(glm::transpose(_inv_modelTransform) * vec4(normal, 0.0f))));
+	//vec2 uv = calculateUVSphere(normal);
 	ray_isect = vec3(_modelTransform * vec4(ray_isect, 1.0f));
 
 	std::unique_ptr<struct Intersection> isect(new Intersection{ ray, ray_isect, normal, uv, _material });
@@ -375,20 +378,19 @@ vec2 calculateUVSphere(const vec3& point){
 	float v = atan2(point.x, point.z);
 	
 	v += pi<decimal>();
-
-	return vec2(u / pi<decimal>(), v / (2 * pi<decimal>()));
+	u = u / pi<decimal>();
+	v = v / (2 * pi<decimal>());
+	return vec2(u,v);
 }
-
 
 vec2 calculateUVCylinder(const vec3& point){
 	vec2 uv;
 	double phi = atan2(point.x, point.z);
-	if (phi < 0.0)
-		phi += 2*pi<decimal>();
+	phi += pi<decimal>();
 
-	uv.x = phi * (1 / (2 * pi<decimal>()));
-	uv.y = (point.y + 1) / 2;
-		
+	uv.y = phi * (1 / (2 * pi<decimal>()));
+	uv.x = (point.y + 1) / 2;
+
 	return uv;
 }
 
@@ -397,9 +399,9 @@ vec2 calculateUVCircle(const vec3& point){
 	vec2 uv;
 	uv.x = sqrt((pow(point.x, 2) + pow(point.z, 2)));
 	double phi = (atan2(point.x, point.z));
-	if (phi < 0.0) {
-		phi += 2 * pi<decimal>();
-	}
+
+	phi += pi<decimal>();
+
 	uv.y = phi * (1 / (2 * pi<decimal>()));
 	return uv;
 }

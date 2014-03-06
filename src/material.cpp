@@ -40,15 +40,12 @@ vec3 Material::shade(const Intersection* isect, uint8_t depth) const {
 //NE PAS OUBLIER QUE LES LUMIERES DIRECTIONNELLES SONT NORMALISEES DANS SCENE.cpp
 
 vec3 Material::shadeLight(const Intersection* isect, const Light* l, uint8_t depth) const {
-	// facteur d'echelle pour le damier
 	float scale = 10.0f;
 	float u = isect->uv.x;
 	float v = isect->uv.y;
-	//if(u>1)std::cout << u << std::endl;
 	vec3 color;
 	if (_texture != nullptr){
-		color = _texture->get(u, v);
-		//std::cout << color.x << " " << color.y << " " << color.z << std::endl;
+		color = _texture->get(_texture->width() * (1-v), _texture->width()*u);
 	}
 	else{
 		if ((int)(floorf(scale * u) + floorf(scale * v)) % 2 == 1){
@@ -57,7 +54,6 @@ vec3 Material::shadeLight(const Intersection* isect, const Light* l, uint8_t dep
 		else
 			color = vec3(0.0f);
 	}
-	//return vec3(1, 1, 1);
 	return color;
 }
 
