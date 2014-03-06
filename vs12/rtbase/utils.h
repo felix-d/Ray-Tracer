@@ -1,7 +1,6 @@
 #pragma once
-
+#include <main.h>
 template<typename T>
-
 // http://www.scratchapixel.com/lessons/3d-basic-lessons/lesson-7-intersecting-simple-shapes/ray-sphere-intersection/
 bool solveQuadratic(const T &a, const T &b, const T &c, T &x0, T &x1)
 {
@@ -21,3 +20,4 @@ bool solveQuadratic(const T &a, const T &b, const T &c, T &x0, T &x1)
 		std::swap(x0, x1);
 	return true;
 }
+vec3 averageVec3s(const std::vector<vec3>& vecs);

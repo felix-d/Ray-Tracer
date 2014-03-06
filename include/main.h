@@ -32,3 +32,4 @@ extern bool use_fresnel;
 inline decimal pi() { return glm::pi<decimal>(); }
 inline decimal epsilon() { return glm::epsilon<decimal>(); }
 inline decimal one_over_pi() { return glm::one_over_pi<decimal>(); }
+#include "../vs12/rtbase/utils.h"

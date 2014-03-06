@@ -1,9 +1,7 @@
 #include <main.h>
-
 #include <fstream>
 #include <iostream>
 #include <iomanip>
-
 #include <basic_structs.h>
 #include <scene.h>
 #include <material.h>
@@ -14,6 +12,37 @@ inline int discrete(decimal v, decimal max_val)
 {
 	return int(min(v * max_val, 255.0));
 }
+
+std::vector<vec3> returnP(const uint& samples, const uint& x_pixel, const uint& y_pixel, const Scene& scene, const decimal& width, const decimal& height) {
+	decimal angle = tan(scene.fov() / 2);
+	decimal invWidth = 1 / (decimal)width, invHeight = 1 / (decimal)height;
+	decimal aspectratio = (decimal)width / (decimal)height;
+	std::vector<vec3> points;
+	std::vector<decimal>xxs;
+	std::vector<decimal>yys;
+	
+	float samples2 = pow(samples, 2);
+	for (uint k = 0; k < samples; k++){
+		decimal indice;
+		if (k != 0){
+			decimal a = k*samples+(k+1)*samples;
+			indice = a / (2 * samples2);
+		}
+		else indice = samples / (2 * samples2);
+		xxs.push_back((2 * ((x_pixel + indice) * invWidth) - 1) * angle * aspectratio);
+		yys.push_back((1-2 * ((y_pixel + indice) * invHeight)) * angle);
+	}
+	for (uint k = 0; k < xxs.size(); k++){
+		for (uint h = 0; h < yys.size(); h++){
+			vec4 p_homog = vec4{xxs[k],yys[h],-1,1};
+			p_homog = scene.cameraMatrix() * p_homog;
+			points.push_back(vec3(p_homog));
+		}
+	}
+	return points;
+}
+
+
 
 int main(int argc, const char* argv[])
 {
@@ -81,16 +110,10 @@ int main(int argc, const char* argv[])
 	////////////////////////////////////
 	// Step 2: Initialize render data //
 	////////////////////////////////////
-	// Le max_depth est la profondeur de recursion maximale
+
 	uint8_t max_depth = scene.maxDepth();
-	// Le vecteur origin doit representer l'oeil de la camera
-	vec4 origin_homog = scene.cameraMatrix() * glm::vec4(0.0f, 0, 0, 1);
-	// compteur indiquant la position a laquelle on est rendu dans le vecteur image
+	vec3 origin = vec3(scene.cameraMatrix() * glm::vec4(0.0f, 0, 0, 1));
 	uint image_pos = 0;
-	decimal invWidth = 1 /(decimal)width, invHeight = 1 / (decimal)height;
-	decimal aspectratio = (decimal) width / (decimal)height;
-	//on obtient ainsi le multplicateur pour le field of view
-	decimal angle = tan(scene.fov()/2);
 	
 	////////////////////////////
 	// Step 3: Perform render //
@@ -100,40 +123,20 @@ int main(int argc, const char* argv[])
     
 	for (uint y_pixel = 0; y_pixel < height; y_pixel++) {
 		for (uint x_pixel = 0; x_pixel < width; x_pixel++) {
-
-			//mapping des pixels pour les normaliser dans un range [-1,1]
-			//Remarquons le offset de 0.5, pour etre au milieu du pixel
-			//il faut multiplier les x par le ratio pour redonner aux pixels
-			//leur forme carre
-			//On multiplie aussi par le multiplicateur pour le fov
-			decimal xx = (2 * ((x_pixel + 0.5) * invWidth) - 1) * angle * aspectratio;
-			decimal yy = (1 - 2 * ((y_pixel + 0.5) * invHeight)) * angle;
-			
-			//transformation du point sur le plan image en coordonnes homogenes
-			vec4 p_homog = vec4{ xx, yy, -1, 1 };
-			//multiplication par la camera to world matrix
-			p_homog = scene.cameraMatrix() * p_homog;
-			//dehomogeneisation 
-			vec3 origin = vec3(origin_homog);
-			vec3 p = vec3(p_homog);
-			vec3 direction = glm::normalize(p - origin);
-			Ray ray = Ray{ origin, direction };
-			std::unique_ptr<Intersection> isect = scene.trace(ray, max_depth);
-			if (isect == nullptr)
-				image[image_pos] = scene.background();
-			else 
-				image[image_pos] = isect->material->shade(isect.get(), max_depth);
+			std::vector<vec3> ps = returnP(samples, x_pixel, y_pixel, scene, width, height);
+			std::vector<vec3> rgbs;
+			for (uint i = 0; i < ps.size(); i++){
+				vec3 p = ps[i];
+				vec3 direction = glm::normalize(p - origin);
+				Ray ray = Ray{ origin, direction };
+				std::unique_ptr<Intersection> isect = scene.trace(ray, max_depth);
+				if (isect == nullptr) rgbs.push_back(scene.background());
+				else rgbs.push_back(isect->material->shade(isect.get(), max_depth));
+			}
+			image[image_pos] = averageVec3s(rgbs);
 			image_pos++;
 		}
 	}
-
-	//	loop over pixels
-	//		loop over subpixels
-	//			generate ray
-	//			scene.trace
-	//			if intersection: material->shade
-	//			else: scene.background
-	//			add color to subpixel
 
 	decimal sample_norm = 1.0 / (samples * samples);
 	std::ofstream outfile(outfilename);

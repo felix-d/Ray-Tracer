@@ -5,7 +5,6 @@ class Texture
 {
 public:
 	Texture(const char* filepath);
-
 	uint width() const { return _width; }
 	uint height() const { return _height; }
 	vec3 sample(const vec2& uv) const;

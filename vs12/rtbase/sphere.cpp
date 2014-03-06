@@ -1,6 +1,5 @@
 #include "sphere.h"
 
-
 Sphere::Sphere(vec3 position, vec3 orientation, vec3 scaling, Material* mtl)
 :Geometry(position, orientation, scaling, mtl){
 	_radius = 1;
