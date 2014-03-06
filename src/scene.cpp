@@ -55,7 +55,7 @@ Scene::Scene(const char* file)
 		_LOG_CRIT() << "Could not open scene file '" << file << "'!" << std::endl;
 
 	_discretization = 100;
-	_maxDepth = 20;
+	_maxDepth = 2;
 
 	for (std::string line; getline(f, line);)
 	{
@@ -174,18 +174,19 @@ std::unique_ptr<Intersection> Scene::trace(const Ray& ray, uint8_t depth, decima
 	if (depth == 0)
 		return nullptr;
 	decimal min_dist = maxdist;
-	std::unique_ptr<Intersection> nearest_isect;
+	std::unique_ptr<Intersection> nearest_isect = nullptr;
 	for (uint i = 0; i < _geometry.size(); i++){
-		std::unique_ptr<Intersection> current_isect = _geometry.at(i)->intersect(ray, min_dist);
+		std::unique_ptr<Intersection> current_isect = _geometry.at(i)->intersect(ray, mindist);
 		if (current_isect != nullptr){
 			decimal current_dist = glm::length(current_isect->position - current_isect->ray.origin);
 			if (current_dist < min_dist) {
+				min_dist = current_dist;
 				nearest_isect = std::move(current_isect);
 				nearest_isect->scene = this;
 			}
 		}
 	}
-	
+	depth--;
 	return std::move(nearest_isect);
 
 	//	early exit if depth == 0
