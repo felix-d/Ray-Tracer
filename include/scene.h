@@ -42,4 +42,5 @@ protected:
 	decimal _discretization;
 
 	uint _maxDepth;
+
 };

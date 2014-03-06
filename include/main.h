@@ -34,3 +34,5 @@ inline decimal epsilon() { return glm::epsilon<decimal>(); }
 inline decimal one_over_pi() { return glm::one_over_pi<decimal>(); }
 #include "../vs12/rtbase/utils.h"
 
+void decrementCurrentDepth();
+uint8_t currentDepth();

@@ -7,7 +7,17 @@
 #include <material.h>
 
 bool use_fresnel = false;
+uint8_t current_depth;
 
+void decrementCurrentDepth(){
+	current_depth--;
+}
+void resetCurrentDepth(uint8_t depth){
+	current_depth = depth;
+}
+uint8_t currentDepth(){
+	return current_depth;
+}
 inline int discrete(decimal v, decimal max_val)
 {
 	return int(min(v * max_val, 255.0));
@@ -83,7 +93,8 @@ int main(int argc, const char* argv[])
 	// Step 2: Initialize render data //
 	////////////////////////////////////
 
-	uint8_t max_depth = scene.maxDepth();
+	uint8_t max_depth = 3;//scene.maxDepth();
+	current_depth = max_depth;
 	vec3 origin = vec3(scene.cameraMatrix() * glm::vec4(0.0f, 0, 0, 1));
 	uint image_pos = 0;
 	
@@ -100,10 +111,16 @@ int main(int argc, const char* argv[])
 			for (uint i = 0; i < ps.size(); i++){
 				vec3 p = ps[i];
 				vec3 direction = glm::normalize(p - origin);
-				Ray ray = Ray{ origin, direction };
+				Ray ray = Ray{ origin, direction }; 
+				//std::cout << (int)max_depth;
 				std::unique_ptr<Intersection> isect = scene.trace(ray, max_depth);
+				//std::cout << (int)max_depth;
 				if (isect == nullptr) rgbs.push_back(scene.background());
-				else rgbs.push_back(isect->material->shade(isect.get(), max_depth));
+				else {
+					rgbs.push_back(isect->material->shade(isect.get(), max_depth));
+					//std::cout << (int)max_depth << std::endl;
+				}
+				resetCurrentDepth(max_depth);
 			}
 			image[image_pos] = averageVec3s(rgbs);
 			image_pos++;

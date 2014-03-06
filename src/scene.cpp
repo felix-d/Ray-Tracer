@@ -169,12 +169,10 @@ Scene::Scene(const char* file)
 
 std::unique_ptr<Intersection> Scene::trace(const Ray& ray, uint8_t depth, decimal maxdist, decimal mindist) const
 {
-	
-	//On n'est pas obliger de faire la recursion tout de suite qui decremente le depth a chaque appel, on peut juste commencer par une iteration lol
-	if (depth == 0)
+	if (depth <= 0)
 		return nullptr;
 	decimal min_dist = maxdist;
-	std::unique_ptr<Intersection> nearest_isect = nullptr;
+	std::unique_ptr<Intersection> nearest_isect;
 	for (uint i = 0; i < _geometry.size(); i++){
 		std::unique_ptr<Intersection> current_isect = _geometry.at(i)->intersect(ray, mindist);
 		if (current_isect != nullptr){
@@ -186,12 +184,5 @@ std::unique_ptr<Intersection> Scene::trace(const Ray& ray, uint8_t depth, decima
 			}
 		}
 	}
-	depth--;
 	return std::move(nearest_isect);
-
-	//	early exit if depth == 0
-	//	for all geometry
-	//		intersect geometry
-	//		keep intersection if closer than current
-	//	return closest intersection (use std::move(isect))
 }
