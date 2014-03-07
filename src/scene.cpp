@@ -169,8 +169,7 @@ Scene::Scene(const char* file)
 
 std::unique_ptr<Intersection> Scene::trace(const Ray& ray, uint8_t depth, decimal maxdist, decimal mindist) const
 {
-	if (depth == 0)
-		return nullptr;
+	if (depth == maxDepth()) return nullptr;
 	decimal min_dist = maxdist;
 	std::unique_ptr<Intersection> nearest_isect;
 	for (uint i = 0; i < _geometry.size(); i++){

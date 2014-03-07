@@ -56,7 +56,6 @@ vec3 Material::shadeLight(const Intersection* isect, const Light* l, uint8_t dep
 			color = vec3(0.0f);
 	}
 	if (l->directional()){
-		//std::cout << " asd" << std::endl;
 		color = (color*l->color) / pi();
 		//color /= 2.0;
 	}
@@ -99,10 +98,8 @@ vec3 MaterialCombined::shadeLight(const Intersection* isect, const Light* l, uin
 
 //
 vec3 MaterialReflective::shade(const Intersection* isect, uint8_t depth) const {
+	depth++;
 
-	if (depth == 0){
-		return _color;
-	}
 	decimal bias = 1e-4;
 	const std::vector<std::unique_ptr<Light>>& lights = isect->scene->lights();
 	vec3 total_light(0.0);
@@ -128,28 +125,36 @@ vec3 MaterialReflective::shade(const Intersection* isect, uint8_t depth) const {
 			else
 				inShadow = true;
 		}
+
+		//Si ce n'est pas dans l'ombre, sinon cest automatiquement noir
+		//il est possible de rajouter une couleur d'ombre au lieu en rajoutant
+		//un else
 		if (!inShadow){
-			vec3 v = isect->ray.direction;
-			vec3 n = isect->normal;
-			vec3 r = v - n * 2.0 * dot(v, n);
-			Ray ray_reflex = Ray{ isect->position + bias*isect->normal, r };
-			decrementCurrentDepth();
-			if (currentDepth() != 0){
-				std::unique_ptr<Intersection> isect2 = isect->scene->trace(ray_reflex, currentDepth());
+			//Si on a pas encore atteint la profondeur maximale
+			if (depth != isect->scene->maxDepth()){
+				vec3 v = isect->ray.direction;
+				vec3 n = isect->normal;
+				vec3 r = v - n * 2.0 * dot(v, n);
+				Ray ray_reflex = Ray{ isect->position + bias*isect->normal, r };
+
+				std::unique_ptr<Intersection> isect2 = isect->scene->trace(ray_reflex, depth);
 				if (isect2 != nullptr){
-					total_light = _color* vec3(isect2->material->shade(isect2.get(), currentDepth()));
+					total_light = _color* vec3(isect2->material->shade(isect2.get(), depth));
 				}
 				else total_light = _color * isect->scene->background();
-				if (lights[i]->directional()){
-					//total_light *= (lights[i]->color) / 3.0;
-				}
-				else{
+			}
+			//sinon on attribue a lintersection la couleur de lobjet, tout simplement
+			else total_light *= _color;
 
-				}
 
+			//On calcule finalement l'attribution de la lumiere.
+			if (lights[i]->directional()){
+				//total_light *= (lights[i]->color) / 3.0;
+			}
+			else{
+				//LUMIERE PONCTUELLE
 			}
 		}
-
 	}
 	return total_light;
 }
