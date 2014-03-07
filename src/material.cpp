@@ -6,22 +6,34 @@ vec3 Material::shade(const Intersection* isect, uint8_t depth) const {
 
 	decimal bias = 1e-4;
 	const std::vector<std::unique_ptr<Light>>& lights = isect->scene->lights();
-	vec3 total_light (0.0f);
+	vec3 total_light(0.0f);
 	vec3 shadow_ray_origin = isect->position + bias * isect->normal;
 	uint nb_lights = lights.size();
 
-
-
 	for (uint i = 0; i < nb_lights; i++){
-		bool inShadow;
-		vec3 shadow_ray_direction = glm::normalize(lights.at(i)->positionOrDirection-shadow_ray_origin);
-		Ray shadow_ray = Ray{ shadow_ray_origin, shadow_ray_direction };
-		if (isect->scene->trace(shadow_ray, 1) == nullptr || lights.at(i)->type >= lights.at(i)->NO_SHADOWS)
+		bool inShadow = false;
+		bool checkForDropShadows = true;
+		vec3 shadow_ray_direction;
+
+		//Light type check
+		if (lights[i]->type >= lights[i]->NO_SHADOWS)
 			inShadow = false;
-		else
-			inShadow = true;
+		else{
+			if (lights[i]->directional())
+				shadow_ray_direction = glm::normalize(-lights.at(i)->positionOrDirection);
+			else
+				shadow_ray_direction = glm::normalize(lights.at(i)->positionOrDirection - shadow_ray_origin);
+
+			//Shadow ray
+			Ray shadow_ray = Ray{ shadow_ray_origin, shadow_ray_direction };
+			if (isect->scene->trace(shadow_ray, 1) == nullptr)
+				inShadow = false;
+			else
+				inShadow = true;
+		}
+
 		if (!inShadow)
-			total_light += this->shadeLight(isect, lights[i].get(), depth);		
+			total_light += this->shadeLight(isect, lights[i].get(), depth);
 	}
 	return total_light / (double)nb_lights;
 }
@@ -34,7 +46,7 @@ vec3 Material::shadeLight(const Intersection* isect, const Light* l, uint8_t dep
 	float v = isect->uv.y;
 	vec3 color;
 	if (_texture != nullptr){
-		color = _texture->get(_texture->width() * (1-v), _texture->width()*u);
+		color = _texture->get(_texture->width() * (1 - v), _texture->width()*u);
 	}
 	else{
 		if ((int)(floorf(scale * u) + floorf(scale * v)) % 2 == 1){
@@ -42,6 +54,15 @@ vec3 Material::shadeLight(const Intersection* isect, const Light* l, uint8_t dep
 		}
 		else
 			color = vec3(0.0f);
+	}
+	if (l->directional()){
+		//std::cout << " asd" << std::endl;
+		color = (color*l->color) / pi();
+		//color /= 2.0;
+	}
+	else{
+		double dist = glm::length(l->positionOrDirection - isect->position);
+		color = (color / glm::pi<double>()) * (l->color / pow(dist, 2));
 	}
 	return color;
 }
@@ -78,45 +99,59 @@ vec3 MaterialCombined::shadeLight(const Intersection* isect, const Light* l, uin
 
 //
 vec3 MaterialReflective::shade(const Intersection* isect, uint8_t depth) const {
-	bool divide = 1;
-	
+
 	if (depth == 0){
 		return _color;
 	}
 	decimal bias = 1e-4;
 	const std::vector<std::unique_ptr<Light>>& lights = isect->scene->lights();
-	vec3 total_light(_color);
+	vec3 total_light(0.0);
 	vec3 shadow_ray_origin = isect->position + bias * isect->normal;
 	for (uint i = 0; i < lights.size(); i++){
-			bool inShadow;
-			vec3 shadow_ray_direction = glm::normalize(lights.at(i)->positionOrDirection - shadow_ray_origin);
-			//Ray shadow_ray = Ray{ shadow_ray_origin, shadow_ray_direction };
-			//if (isect->scene->trace(shadow_ray, 1) == nullptr)
-			//	inShadow = false;
-			//else
-			//	inShadow = true;
-			depth++;
-			//if (!inShadow){
+		bool inShadow = false;
+		bool checkForDropShadows = true;
+		vec3 shadow_ray_direction;
+
+		//Light type check
+		if (lights[i]->type >= lights[i]->NO_SHADOWS)
+			inShadow = false;
+		else{
+			if (lights[i]->directional())
+				shadow_ray_direction = glm::normalize(-lights.at(i)->positionOrDirection);
+			else
+				shadow_ray_direction = glm::normalize(lights.at(i)->positionOrDirection - shadow_ray_origin);
+
+			//Shadow ray
+			Ray shadow_ray = Ray{ shadow_ray_origin, shadow_ray_direction };
+			if (isect->scene->trace(shadow_ray, 1) == nullptr)
+				inShadow = false;
+			else
+				inShadow = true;
+		}
+		if (!inShadow){
 			vec3 v = isect->ray.direction;
 			vec3 n = isect->normal;
-			vec3 r = v - n * 2.0 * dot(v,n);
+			vec3 r = v - n * 2.0 * dot(v, n);
 			Ray ray_reflex = Ray{ isect->position + bias*isect->normal, r };
 			decrementCurrentDepth();
 			if (currentDepth() != 0){
 				std::unique_ptr<Intersection> isect2 = isect->scene->trace(ray_reflex, currentDepth());
 				if (isect2 != nullptr){
-					divide = true;
-					total_light += vec3(isect2->material->shade(isect2.get(), currentDepth()));
+					total_light = _color* vec3(isect2->material->shade(isect2.get(), currentDepth()));
 				}
-				else total_light += isect->scene->background();
-			
+				else total_light = _color * isect->scene->background();
+				if (lights[i]->directional()){
+					//total_light *= (lights[i]->color) / 3.0;
+				}
+				else{
+
+				}
+
 			}
-			else{
-				divide = 0;
-			}
+		}
+
 	}
-	if(divide)return total_light/2.0;
-	else return total_light;
+	return total_light;
 }
 
 

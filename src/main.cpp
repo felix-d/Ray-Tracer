@@ -33,11 +33,11 @@ int main(int argc, const char* argv[])
 	/////////////////////////////////
 
 	std::string outfilename = "image.ppm";
-	std::string infilename = "../../scenes/interreflect.scn";
+	std::string infilename = "../../scenes/uv.scn";
 
-	uint width = 1500;
-	uint height = 1200;
-	uint samples = 2;
+	uint width = 640;
+	uint height = 480;
+	uint samples = 1;
 
 	// Simple tokenization scheme
 	{
