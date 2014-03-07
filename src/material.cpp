@@ -36,12 +36,14 @@ vec3 Material::shade(const Intersection* isect, uint8_t depth) const {
 			total_light += this->shadeLight(isect, lights[i].get(), depth);
 		
 	}
-	return total_light / (double)nb_lights;
+	return total_light/ (double)nb_lights;
 }
 
 //NE PAS OUBLIER QUE LES LUMIERES DIRECTIONNELLES SONT NORMALISEES DANS SCENE.cpp
 
 vec3 Material::shadeLight(const Intersection* isect, const Light* l, uint8_t depth) const {
+	decimal coefficient = 0.3;
+	
 	float scale = 10.0f;
 	float u = isect->uv.x;
 	float v = isect->uv.y;
@@ -56,6 +58,16 @@ vec3 Material::shadeLight(const Intersection* isect, const Light* l, uint8_t dep
 		else
 			color = vec3(0.0f);
 	}
+	if (l->directional()){
+		
+		//std::cout << lambert << std::endl;
+		//if (lambert < 0) std::cout << lambert<<std::endl;
+		color = coefficient * color * l->color;
+	}
+	else {
+		double dist = glm::length(l->positionOrDirection - isect->position);
+		color = coefficient * (color)* (l->color / pow(dist, 2.0));
+	}
     //IL FAUT IMPLEMENTER LATTRIBUTION DE LA LUMIERE SUR LE MATERIAU PAR DEFAUT
 	//color *= (l->color)/pi();
 	return color;
@@ -63,14 +75,17 @@ vec3 Material::shadeLight(const Intersection* isect, const Light* l, uint8_t dep
 
 
 vec3 MaterialLambert::shadeLight(const Intersection* isect, const Light* l, uint8_t depth) const {
-	double lambert = max(glm::dot(l->positionOrDirection, isect->normal), 0.0);
+	//double lambert = max(glm::dot(l->positionOrDirection, isect->normal), 0.0);
 	vec3 color;
 
-	if (l->directional())
-		color = lambert * (_color / glm::pi<double>()) * l->color;
+	if (l->directional()){
+		double lambert = max(glm::dot(-l->positionOrDirection, isect->normal), 0.0);
+		color = lambert * (_color) * l->color;
+	}
 	else {
+		double lambert = max(glm::dot(-normalize(isect->position-l->positionOrDirection), isect->normal), 0.0);
 		double dist = glm::length(l->positionOrDirection - isect->position);
-		color = lambert * (_color / glm::pi<double>()) * (l->color / pow(dist, 2));
+		color = lambert * (_color) * (l->color / pow(dist, 2.0));
 	}
 
 	return color;
