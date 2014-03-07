@@ -27,7 +27,7 @@ int main(int argc, const char* argv[])
 
 	uint width = 600;
 	uint height = 400;
-	uint samples = 2;
+	uint samples = 1;
     
 	// Simple tokenization scheme
 	{
