@@ -14,9 +14,9 @@ _material(mtl)
 {	
 	mat4 translation_mat = glm::translate(mat4(), position);
 	mat4 scaling_mat = glm::scale(mat4(), scaling);
-	mat4 rotateX = glm::rotate(mat4(), orientation.x, vec3(1,0,0));
-	mat4 rotateY = glm::rotate(mat4(), orientation.y, vec3(0, 1, 0));
-	mat4 rotateZ = glm::rotate(mat4(), orientation.z, vec3(0, 0, 1));
+	mat4 rotateX = glm::rotate(mat4(), orientation.x, vec3(1.0,0,0));
+	mat4 rotateY = glm::rotate(mat4(), orientation.y, vec3(0.0, 1, 0));
+	mat4 rotateZ = glm::rotate(mat4(), orientation.z, vec3(0.0, 0, 1));
 	_modelTransform ={
 		translation_mat*
 		

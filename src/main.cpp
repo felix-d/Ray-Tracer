@@ -23,10 +23,10 @@ int main(int argc, const char* argv[])
 	/////////////////////////////////
 
 	std::string outfilename = "image.ppm";
-	std::string infilename = "../../scenes/interreflect.scn";
+	std::string infilename = "../../scenes/refract_glass.scn";
 
-	uint width = 800;
-	uint height = 600;
+	uint width = 600;
+	uint height = 400;
 	uint samples = 1;
     
 	// Simple tokenization scheme
@@ -83,10 +83,11 @@ int main(int argc, const char* argv[])
 	// Step 2: Initialize render data //
 	////////////////////////////////////
 
-	uint8_t max_depth = 5;//scene.maxDepth();
+	uint8_t max_depth = scene.maxDepth();
 	vec3 origin = vec3(scene.cameraMatrix() * glm::vec4(0.0f, 0, 0, 1));
 	uint image_pos = 0;
-	
+	float count = 0;
+	float nbPixels = width*height;
 	////////////////////////////
 	// Step 3: Perform render //
 	////////////////////////////
@@ -94,7 +95,10 @@ int main(int argc, const char* argv[])
 	//VOIR http://www.scratchapixel.com/lessons/3d-basic-lessons/lesson-6-rays-cameras-and-images/building-primary-rays-and-rendering-an-image/
     
 	for (uint y_pixel = 0; y_pixel < height; y_pixel++) {
+		if (y_pixel % 5 == 0) std::cout << ((float)y_pixel /height)*100.0 << "%" << "\r";
 		for (uint x_pixel = 0; x_pixel < width; x_pixel++) {
+			count++; 
+			
 			std::vector<vec3> ps = superSampling(samples, x_pixel, y_pixel, scene, width, height);
 			std::vector<vec3> rgbs;
 			for (uint i = 0; i < ps.size(); i++){
@@ -119,9 +123,11 @@ int main(int argc, const char* argv[])
 	decimal sample_norm = 1.0 / (samples * samples);
 	std::ofstream outfile(outfilename);
 	outfile << "P3" << std::endl << width << " " << height << std::endl << 255 << std::endl;
-	for (uint i = 0; i < width * height; i++)
+	std::cout << "Writing file" << std::endl;
+	for (uint i = 0; i < width * height; i++){
+		if (i % 10000 == 0) std::cout << ((float)i / (width*height))*100.0 << "%" << "\r";
 		outfile << " " << discrete(image[i].r * sample_norm, scene.discretization()) << " " << discrete(image[i].g * sample_norm, scene.discretization()) << " " << discrete(image[i].b * sample_norm, scene.discretization()) << std::endl;
-
+	}
 	std::cout << "Wrote file '" << outfilename << "'." << std::endl;
 	std::string quit;
 	std::cin >> quit;

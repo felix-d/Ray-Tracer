@@ -175,5 +175,26 @@ vec3 MaterialReflective::shade(const Intersection* isect, uint8_t depth) const {
 
 
 vec3 MaterialRefractive::shade(const Intersection* isect, uint8_t depth) const {
-	return vec3(1);
+	depth++;
+	if (depth >= isect->scene->maxDepth())return _color;
+	std::unique_ptr<Intersection> refract;
+	vec3 total_light = vec3(0.0);
+	vec3 refrdir = vec3(0.0f);
+	decimal offset = 1e-4;
+	vec3 n = isect->normal;
+	vec3 d = isect->ray.direction;
+	bool inside = false;
+	if (dot(d,n) > 0) n = -n, inside = true;
+	decimal ior = _index, eta = (inside) ? ior : 1 / ior;
+	decimal cosi = dot(-n,d);
+	decimal k = 1 - eta * eta * (1 - cosi * cosi);
+	refrdir = (d * eta + n * (eta *  cosi - sqrt(k)));
+	refrdir = refrdir / length(refrdir);
+	Ray refractionRay = Ray{ isect->position - n*offset, refrdir };
+	refract = isect->scene->trace(refractionRay, depth);
+	if (refract != nullptr)
+	total_light = refract->material->shade(refract.get(),depth) * _color;
+	else 
+		total_light =  _color;
+	return total_light;
 }

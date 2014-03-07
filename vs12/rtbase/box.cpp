@@ -47,7 +47,7 @@ std::unique_ptr<struct Intersection> Box::intersect(const struct Ray& ray, decim
 
 	//Calcul des normales
 	decimal min_face_dist = INFINITY;
-	uint index;
+	uint index=0;
 	for (uint i = 0; i < _faces_points.size(); i++){
 		decimal curr_face_dist = length(_faces_points[i] - ray_isect);
 		if (curr_face_dist < min_face_dist){

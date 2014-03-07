@@ -121,7 +121,6 @@ Scene::Scene(const char* file)
 				l->type |= Light::NO_SHADOWS;
 
 			iss >> l->color >> l->positionOrDirection;
-			std::cout << "la light est " << l->color.r << " "<<l->color.g <<" "<< l->color.b << std::endl;
 			if (l->directional())
 				l->positionOrDirection = normalize(l->positionOrDirection);
 
