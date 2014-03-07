@@ -34,6 +34,7 @@ vec3 Material::shade(const Intersection* isect, uint8_t depth) const {
 
 		if (!inShadow)
 			total_light += this->shadeLight(isect, lights[i].get(), depth);
+		
 	}
 	return total_light / (double)nb_lights;
 }
@@ -55,14 +56,8 @@ vec3 Material::shadeLight(const Intersection* isect, const Light* l, uint8_t dep
 		else
 			color = vec3(0.0f);
 	}
-	if (l->directional()){
-		color = (color*l->color) / pi();
-		//color /= 2.0;
-	}
-	else{
-		double dist = glm::length(l->positionOrDirection - isect->position);
-		color = (color / glm::pi<double>()) * (l->color / pow(dist, 2));
-	}
+    //IL FAUT IMPLEMENTER LATTRIBUTION DE LA LUMIERE SUR LE MATERIAU PAR DEFAUT
+	//color *= (l->color)/pi();
 	return color;
 }
 
