@@ -3,7 +3,7 @@
 #include <iostream>
 
 vec3 Material::shade(const Intersection* isect, uint8_t depth) const {
-
+	depth++;
 	decimal bias = 1e-4;
 	const std::vector<std::unique_ptr<Light>>& lights = isect->scene->lights();
 	vec3 total_light(0.0f);
@@ -42,7 +42,7 @@ vec3 Material::shade(const Intersection* isect, uint8_t depth) const {
 //NE PAS OUBLIER QUE LES LUMIERES DIRECTIONNELLES SONT NORMALISEES DANS SCENE.cpp
 
 vec3 Material::shadeLight(const Intersection* isect, const Light* l, uint8_t depth) const {
-	decimal coefficient = 0.3;
+	decimal coefficient = 0.35;
 	
 	float scale = 10.0f;
 	float u = isect->uv.x;
@@ -66,7 +66,7 @@ vec3 Material::shadeLight(const Intersection* isect, const Light* l, uint8_t dep
 	}
 	else {
 		double dist = glm::length(l->positionOrDirection - isect->position);
-		color = coefficient * (color)* (l->color / pow(dist, 2.0));
+		color = coefficient * (color)* ((l->color*pi()) / pow(dist, 2.0));
 	}
     //IL FAUT IMPLEMENTER LATTRIBUTION DE LA LUMIERE SUR LE MATERIAU PAR DEFAUT
 	//color *= (l->color)/pi();
@@ -85,7 +85,7 @@ vec3 MaterialLambert::shadeLight(const Intersection* isect, const Light* l, uint
 	else {
 		double lambert = max(glm::dot(-normalize(isect->position-l->positionOrDirection), isect->normal), 0.0);
 		double dist = glm::length(l->positionOrDirection - isect->position);
-		color = lambert * (_color) * (l->color / pow(dist, 2.0));
+		color = lambert * (_color) * ((l->color*pi()) / pow(dist, 2.0));
 	}
 
 	return color;
@@ -109,7 +109,8 @@ vec3 MaterialCombined::shadeLight(const Intersection* isect, const Light* l, uin
 //
 vec3 MaterialReflective::shade(const Intersection* isect, uint8_t depth) const {
 	depth++;
-
+	//On peut ajouter un coefficient si on veut que le materiel reflechisse aussi la lumiere.
+	decimal coefficient = 0.11;
 	decimal bias = 1e-4;
 	const std::vector<std::unique_ptr<Light>>& lights = isect->scene->lights();
 	vec3 total_light(0.0);
@@ -156,17 +157,20 @@ vec3 MaterialReflective::shade(const Intersection* isect, uint8_t depth) const {
 			//sinon on attribue a lintersection la couleur de lobjet, tout simplement
 			else total_light *= _color;
 
-
-			//On calcule finalement l'attribution de la lumiere.
 			if (lights[i]->directional()){
-				//total_light *= (lights[i]->color) / 3.0;
+
+				//std::cout << lambert << std::endl;
+				//if (lambert < 0) std::cout << lambert<<std::endl;
+				total_light = coefficient * total_light * lights[i]->color;
 			}
-			else{
-				//LUMIERE PONCTUELLE
+			else {
+				double dist = glm::length(lights[i]->positionOrDirection - isect->position);
+				total_light = coefficient * (total_light)* ((lights[i]->color*pi()) / pow(dist, 2.0));
 			}
+			
 		}
 	}
-	return total_light;
+	return total_light/(decimal)lights.size();
 }
 
 
