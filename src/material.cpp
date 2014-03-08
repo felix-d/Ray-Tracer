@@ -199,6 +199,9 @@ vec3 MaterialRefractive::shade(const Intersection* isect, uint8_t depth) const {
 		eta = index_of_refraction;
 	else
 		eta = 1 / index_of_refraction;
+	if (1 - (pow(eta, 2)*(1 - pow((dot(d, n)), 2))) <= 0){
+		refrdir = eta*( d - 2.0* n * dot(d, n));
+	} else
 	refrdir = (eta*(d - n*dot(d, n))) - n*sqrt(1 - (pow(eta, 2)*(1 - pow((dot(d, n)), 2))));
 	refrdir = refrdir / length(refrdir);
 	Ray refractionRay = Ray{ isect->position - n*offset, refrdir };
