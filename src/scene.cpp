@@ -55,7 +55,7 @@ Scene::Scene(const char* file)
 		_LOG_CRIT() << "Could not open scene file '" << file << "'!" << std::endl;
 
 	_discretization = 100;
-	_maxDepth = 20;
+	_maxDepth = 10;
 
 	for (std::string line; getline(f, line);)
 	{
