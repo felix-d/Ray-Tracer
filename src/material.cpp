@@ -177,41 +177,54 @@ vec3 MaterialReflective::shade(const Intersection* isect, uint8_t depth) const {
 vec3 MaterialRefractive::shade(const Intersection* isect, uint8_t depth) const {
 	depth++;
 	//early exit
+	decimal coefficient = 0.25;
+	const std::vector<std::unique_ptr<Light>>& lights = isect->scene->lights();
 	if (depth >= isect->scene->maxDepth())return _color;
-	
+
 	//initialization
-	std::unique_ptr<Intersection> refract;
 	vec3 total_light = vec3(0.0);
-	vec3 refrdir = vec3(0.0);
+	vec3 refrdir;
 	decimal offset = 1e-4;
-	decimal index_of_refraction = _index;
-	decimal eta;
 	vec3 n = isect->normal;
 	vec3 d = isect->ray.direction;
-	bool inside = false;
-
+	bool inside;
+	
 	//calculs
 	if (dot(d, n) > 0){
 		n = -n;
 		inside = true;
-	}
-	if (inside)
-		eta = index_of_refraction;
-	else
-		eta = 1 / index_of_refraction;
-	if (1 - (pow(eta, 2)*(1 - pow((dot(d, n)), 2))) <= 0){
-		refrdir = eta*( d - 2.0* n * dot(d, n));
-	} else
-	refrdir = (eta*(d - n*dot(d, n))) - n*sqrt(1 - (pow(eta, 2)*(1 - pow((dot(d, n)), 2))));
-	refrdir = refrdir / length(refrdir);
+	} 
+	else inside = false;
+	decimal eta = inside ? _index : 1 / _index;
+	decimal k = 1 - (pow(eta, 2)*(1 - pow((dot(d, n)), 2)));
+	if (k <= 0) refrdir = eta*( d - 2.0* n * dot(d, n)); //reflexion interne
+	else refrdir = (eta*(d - n*dot(d, n))) - n*sqrt(k);
+	refrdir = normalize(refrdir);
 	Ray refractionRay = Ray{ isect->position - n*offset, refrdir };
-	refract = isect->scene->trace(refractionRay, depth);
+	std::unique_ptr<Intersection> refract = isect->scene->trace(refractionRay, depth);
 	
 	//attribution de la couleur
-	if (refract != nullptr)
-	total_light = (refract->material->shade(refract.get(),depth) * _color);
-	else 
-		total_light =  _color;
+	for (uint i = 0; i < lights.size(); i++){
+		vec3 temp_light;
+		if (lights[i]->directional()){
+			if (refract != nullptr)
+				temp_light = coefficient * lights[i]->color*refract->material->shade(refract.get(), depth) * _color;
+			else
+				temp_light = coefficient * lights[i]->color*_color;
+			//std::cout << lambert << std::endl;
+			//if (lambert < 0) std::cout << lambert<<std::endl;
+			//temp_light = coefficient * lights[i]->color;
+		}
+		else {
+			double dist = glm::length(lights[i]->positionOrDirection - isect->position);
+			if (refract != nullptr)
+				temp_light = coefficient * ((lights[i]->color*pi()) / pow(dist, 2.0))*refract->material->shade(refract.get(), depth) * _color;
+			else
+				temp_light = coefficient * ((lights[i]->color*pi()) / pow(dist, 2.0)) * _color;
+		}
+		total_light = (i==0)?temp_light: total_light*=temp_light;
+	}
 
-	return total_light;
+	//Return
+	return total_light/((decimal)lights.size());
 }
