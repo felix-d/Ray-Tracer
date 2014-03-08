@@ -116,6 +116,7 @@ vec3 MaterialReflective::shade(const Intersection* isect, uint8_t depth) const {
 	vec3 total_light(0.0);
 	vec3 shadow_ray_origin = isect->position + bias * isect->normal;
 	for (uint i = 0; i < lights.size(); i++){
+		vec3 temp_light;
 		bool inShadow = false;
 		bool checkForDropShadows = true;
 		vec3 shadow_ray_direction;
@@ -150,25 +151,26 @@ vec3 MaterialReflective::shade(const Intersection* isect, uint8_t depth) const {
 
 				std::unique_ptr<Intersection> isect2 = isect->scene->trace(ray_reflex, depth);
 				if (isect2 != nullptr){
-					total_light = _color* vec3(isect2->material->shade(isect2.get(), depth));
+					temp_light = _color* vec3(isect2->material->shade(isect2.get(), depth));
 				}
-				else total_light = _color * isect->scene->background();
+				else temp_light = _color * isect->scene->background();
 			}
 			//sinon on attribue a lintersection la couleur de lobjet, tout simplement
-			else total_light *= _color;
+			else temp_light = _color;
 
 			if (lights[i]->directional()){
 
 				//std::cout << lambert << std::endl;
 				//if (lambert < 0) std::cout << lambert<<std::endl;
-				total_light = coefficient * total_light * lights[i]->color;
+				temp_light = coefficient * temp_light * lights[i]->color;
 			}
 			else {
 				double dist = glm::length(lights[i]->positionOrDirection - isect->position);
-				total_light = coefficient * (total_light)* ((lights[i]->color*pi()) / pow(dist, 2.0));
+				temp_light = coefficient * (temp_light)* ((lights[i]->color*pi()) / pow(dist, 2.0));
 			}
 			
 		}
+		total_light = (i == 0) ? temp_light : total_light *= temp_light;
 	}
 	return total_light/(decimal)lights.size();
 }
@@ -222,7 +224,7 @@ vec3 MaterialRefractive::shade(const Intersection* isect, uint8_t depth) const {
 			else
 				temp_light = coefficient * ((lights[i]->color*pi()) / pow(dist, 2.0)) * _color;
 		}
-		total_light = (i==0)?temp_light: total_light*=temp_light;
+		total_light = (i==0)?temp_light : total_light*=temp_light;
 	}
 
 	//Return
