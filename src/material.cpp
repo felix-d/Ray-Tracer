@@ -9,7 +9,7 @@ vec3 Material::shade(const Intersection* isect, uint8_t depth) const {
 	vec3 total_light(0.0f);
 	vec3 shadow_ray_origin = isect->position + offset * isect->normal;
 	uint nb_lights = lights.size();
-
+	
 	for (uint i = 0; i < nb_lights; i++){
 		bool inShadow = false;
 		bool checkForDropShadows = true;
@@ -36,7 +36,8 @@ vec3 Material::shade(const Intersection* isect, uint8_t depth) const {
 			total_light += this->shadeLight(isect, lights[i].get(), depth);
 		
 	}
-	return total_light/ (double)nb_lights;
+
+	return total_light/(decimal)nb_lights;
 }
 
 //NE PAS OUBLIER QUE LES LUMIERES DIRECTIONNELLES SONT NORMALISEES DANS SCENE.cpp
@@ -45,10 +46,10 @@ vec3 Material::shadeLight(const Intersection* isect, const Light* l, uint8_t dep
 	float scale = 10.0f;
 	float u = isect->uv.x;
 	float v = isect->uv.y;
-	decimal coefficient = 0.5;
+    //coefficient de reflexion de la lumiere
 	vec3 color;
 	if (_texture != nullptr){
-		color = _texture->get(_texture->width() * (1 - v), _texture->width()*u);
+		color = _texture->sample(vec2(_texture->width() * u, _texture->height()*v));
 	}
 	else{
 		if ((int)(floorf(scale * u) + floorf(scale * v)) % 2 == 1){
@@ -60,14 +61,13 @@ vec3 Material::shadeLight(const Intersection* isect, const Light* l, uint8_t dep
 	if (l->directional()){
 		
 
-		color =  l->color * color;
+		color = l->color * color;
 	}
 	else {
 		double dist = glm::length(l->positionOrDirection - isect->position);
 		color = ((l->color*pi()) / pow(dist, 2.0))* color;
 	}
-
-	return color * coefficient;
+	return color;
 }
 
 
@@ -146,7 +146,7 @@ vec3 MaterialCombined::shade(const Intersection* isect, uint8_t depth) const {
 
 	}
 
-	return total_light / (double)nb_lights;
+	return total_light/(decimal)nb_lights;
 }
 
 
