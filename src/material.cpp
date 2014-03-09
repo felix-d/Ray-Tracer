@@ -204,29 +204,13 @@ vec3 MaterialRefractive::shade(const Intersection* isect, uint8_t depth) const {
 	refrdir = normalize(refrdir);
 	Ray refractionRay = Ray{ isect->position - n*offset, refrdir };
 	std::unique_ptr<Intersection> refract = isect->scene->trace(refractionRay, depth);
-	
-	//attribution de la couleur
-	for (uint i = 0; i < lights.size(); i++){
-		vec3 temp_light;
-		if (lights[i]->directional()){
-			if (refract != nullptr)
-				temp_light = coefficient * lights[i]->color*refract->material->shade(refract.get(), depth) * _color;
-			else
-				temp_light = coefficient * lights[i]->color*_color;
-			//std::cout << lambert << std::endl;
-			//if (lambert < 0) std::cout << lambert<<std::endl;
-			//temp_light = coefficient * lights[i]->color;
-		}
-		else {
-			double dist = glm::length(lights[i]->positionOrDirection - isect->position);
-			if (refract != nullptr)
-				temp_light = coefficient * ((lights[i]->color*pi()) / pow(dist, 2.0))*refract->material->shade(refract.get(), depth) * _color;
-			else
-				temp_light = coefficient * ((lights[i]->color*pi()) / pow(dist, 2.0)) * _color;
-		}
-		total_light = (i==0)?temp_light : total_light*=temp_light;
-	}
 
-	//Return
-	return total_light/((decimal)lights.size());
+	//attribution de la couleur
+	vec3 temp_light;
+	if (refract != nullptr && depth < isect->scene->maxDepth())
+		temp_light =refract->material->shade(refract.get(), depth) * _color;
+	else
+		temp_light =_color;
+
+	return temp_light;
 }
