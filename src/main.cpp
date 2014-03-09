@@ -23,7 +23,7 @@ int main(int argc, const char* argv[])
 	/////////////////////////////////
 
 	std::string outfilename = "image.ppm";
-	std::string infilename = "../../scenes/combined.scn";
+	std::string infilename = "../../scenes/uvmat.scn";
 
 	uint width = 640;
 	uint height = 480;
