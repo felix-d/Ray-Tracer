@@ -75,17 +75,16 @@ vec3 Material::shadeLight(const Intersection* isect, const Light* l, uint8_t dep
 
 
 vec3 MaterialLambert::shadeLight(const Intersection* isect, const Light* l, uint8_t depth) const {
-	//double lambert = max(glm::dot(l->positionOrDirection, isect->normal), 0.0);
 	vec3 color;
 
 	if (l->directional()){
 		double lambert = max(glm::dot(-l->positionOrDirection, isect->normal), 0.0);
-		color = lambert * (_color) * l->color;
+		color = lambert * _color * l->color;
 	}
 	else {
-		double lambert = max(glm::dot(-normalize(isect->position-l->positionOrDirection), isect->normal), 0.0);
+		double lambert = max(glm::dot(-normalize(isect->position - l->positionOrDirection), isect->normal), 0.0);
 		double dist = glm::length(l->positionOrDirection - isect->position);
-		color = lambert * (_color) * ((l->color*pi()) / pow(dist, 2.0));
+		color = lambert * _color * l->color * glm::pi<double>() / pow(dist, 2.0);
 	}
 
 	return color;
@@ -93,17 +92,87 @@ vec3 MaterialLambert::shadeLight(const Intersection* isect, const Light* l, uint
 
 
 vec3 MaterialBlinnPhong::shadeLight(const Intersection* isect, const Light* l, uint8_t depth) const {
-	return vec3(1);
+	vec3 color;
+
+	if (l->directional()){
+		vec3 l_vec = -l->positionOrDirection;
+		double l_angle = max(glm::dot(l_vec, isect->normal), 0.0);
+		vec3 h_vec = (l_vec - isect->ray.direction) / glm::length(l_vec - isect->ray.direction);
+		double h_angle = max(glm::dot(h_vec, isect->normal), 0.0);
+		color = l_angle * ((_shininess + 2.0) / 8.0) * pow(h_angle, _shininess) * _color * l->color;
+	}
+	else {
+		vec3 l_vec = -glm::normalize(isect->position - l->positionOrDirection);
+		double l_angle = max(glm::dot(l_vec, isect->normal), 0.0);
+		vec3 h_vec = (l_vec - isect->ray.direction) / glm::length(l_vec - isect->ray.direction);
+		double h_angle = max(glm::dot(h_vec, isect->normal), 0.0);
+		double dist = glm::length(l->positionOrDirection - isect->position);
+		color = l_angle * ((_shininess + 2.0) / 8.0) * pow(h_angle, _shininess) * _color * l->color * glm::pi<double>() / pow(dist, 2.0);
+	}
+
+	return color;
 }
 
 
 vec3 MaterialCombined::shade(const Intersection* isect, uint8_t depth) const {
-	return vec3(1);
+	depth++;
+	decimal bias = 1e-4;
+	const std::vector<std::unique_ptr<Light>>& lights = isect->scene->lights();
+	vec3 total_light = _ambient;
+	vec3 shadow_ray_origin = isect->position + bias * isect->normal;
+	uint nb_lights = lights.size();
+
+	for (uint i = 0; i < nb_lights; i++){
+		bool inShadow = false;
+		bool checkForDropShadows = true;
+		vec3 shadow_ray_direction;
+
+		//Light type check
+		if (lights[i]->type >= lights[i]->NO_SHADOWS)
+			inShadow = false;
+		else{
+			if (lights[i]->directional())
+				shadow_ray_direction = glm::normalize(-lights.at(i)->positionOrDirection);
+			else
+				shadow_ray_direction = glm::normalize(lights.at(i)->positionOrDirection - shadow_ray_origin);
+
+			//Shadow ray
+			Ray shadow_ray = Ray{ shadow_ray_origin, shadow_ray_direction };
+			if (isect->scene->trace(shadow_ray, 1) == nullptr)
+				inShadow = false;
+			else
+				inShadow = true;
+		}
+
+		if (!inShadow)
+			total_light += this->shadeLight(isect, lights[i].get(), depth);
+
+	}
+
+	return total_light / (double)nb_lights;
 }
 
 
 vec3 MaterialCombined::shadeLight(const Intersection* isect, const Light* l, uint8_t depth) const {
-	return vec3(1);
+	vec3 color;
+
+	if (l->directional()){
+		vec3 l_vec = -l->positionOrDirection;
+		double l_angle = max(glm::dot(l_vec, isect->normal), 0.0);
+		vec3 h_vec = (l_vec - isect->ray.direction) / glm::length(l_vec - isect->ray.direction);
+		double h_angle = max(glm::dot(h_vec, isect->normal), 0.0);
+		color = (_diffuse + _specular * ((_shininess + 2.0) / 8.0) * pow(h_angle, _shininess)) * l_angle * l->color;
+	}
+	else {
+		vec3 l_vec = -glm::normalize(isect->position - l->positionOrDirection);
+		double l_angle = max(glm::dot(l_vec, isect->normal), 0.0);
+		vec3 h_vec = (l_vec - isect->ray.direction) / glm::length(l_vec - isect->ray.direction);
+		double h_angle = max(glm::dot(h_vec, isect->normal), 0.0);
+		double dist = glm::length(l->positionOrDirection - isect->position);
+		color = (_diffuse + _specular * ((_shininess + 2.0) / 8.0) * pow(h_angle, _shininess)) * l_angle * l->color * glm::pi<double>() / pow(dist, 2.0);
+	}
+
+	return color;
 }
 
 //
