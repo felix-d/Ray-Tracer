@@ -42,11 +42,10 @@ vec3 Material::shade(const Intersection* isect, uint8_t depth) const {
 //NE PAS OUBLIER QUE LES LUMIERES DIRECTIONNELLES SONT NORMALISEES DANS SCENE.cpp
 
 vec3 Material::shadeLight(const Intersection* isect, const Light* l, uint8_t depth) const {
-	decimal coefficient = 0.35;
-	
 	float scale = 10.0f;
 	float u = isect->uv.x;
 	float v = isect->uv.y;
+	decimal coefficient = 0.5;
 	vec3 color;
 	if (_texture != nullptr){
 		color = _texture->get(_texture->width() * (1 - v), _texture->width()*u);
@@ -60,17 +59,15 @@ vec3 Material::shadeLight(const Intersection* isect, const Light* l, uint8_t dep
 	}
 	if (l->directional()){
 		
-		//std::cout << lambert << std::endl;
-		//if (lambert < 0) std::cout << lambert<<std::endl;
-		color = coefficient * color * l->color;
+
+		color =  l->color * color;
 	}
 	else {
 		double dist = glm::length(l->positionOrDirection - isect->position);
-		color = coefficient * (color)* ((l->color*pi()) / pow(dist, 2.0));
+		color = ((l->color*pi()) / pow(dist, 2.0))* color;
 	}
-    //IL FAUT IMPLEMENTER LATTRIBUTION DE LA LUMIERE SUR LE MATERIAU PAR DEFAUT
-	//color *= (l->color)/pi();
-	return color;
+
+	return color * coefficient;
 }
 
 
@@ -187,9 +184,9 @@ vec3 MaterialReflective::shade(const Intersection* isect, uint8_t depth) const {
 	Ray ray_reflex = Ray{ isect->position + offset*isect->normal, r };
 	std::unique_ptr<Intersection> isect2 = isect->scene->trace(ray_reflex, depth);
 	if (isect2 != nullptr){
-		color = _color* vec3(isect2->material->shade(isect2.get(), depth));
+		color = vec3(isect2->material->shade(isect2.get(), depth)) * _color;
 	}
-	else color = _color * isect->scene->background();
+	else color = isect->scene->background() * _color;
 
 	return color;
 }
@@ -201,7 +198,6 @@ vec3 MaterialRefractive::shade(const Intersection* isect, uint8_t depth) const {
 	//early exit
 	const std::vector<std::unique_ptr<Light>>& lights = isect->scene->lights();
 	
-
 	//initialization
 	vec3 color = vec3(0.0);
 	vec3 refrdir;
