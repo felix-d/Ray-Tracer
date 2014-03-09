@@ -23,7 +23,7 @@ int main(int argc, const char* argv[])
 	/////////////////////////////////
 
 	std::string outfilename = "image.ppm";
-	std::string infilename = "../../scenes/uvmat.scn";
+	std::string infilename = "../../scenes/refract_glass.scn";
 
 	uint width = 640;
 	uint height = 480;
@@ -138,9 +138,10 @@ int main(int argc, const char* argv[])
 
 std::vector<vec3> superSampling(const uint& samples, const uint& x_pixel, const uint& y_pixel, 
 	const Scene& scene, const decimal& width, const decimal& height) {
-	decimal angle = tan(scene.fov() / 2);
-	decimal invWidth = 1 / (decimal)width, invHeight = 1 / (decimal)height;
 	decimal aspectratio = (decimal)width / (decimal)height;
+	decimal angle = tan(scene.fov()/(2*aspectratio));
+	decimal invWidth = 1 / (decimal)width, invHeight = 1 / (decimal)height;
+	
 	std::vector<vec3> points;
 	std::vector<decimal>xxs, yys;
 	float samples2 = pow(samples, 2);
