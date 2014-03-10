@@ -6,7 +6,7 @@
 #include <scene.h>
 #include <material.h>
 
-bool use_fresnel = false;
+bool use_fresnel = true;
 
 inline int discrete(decimal v, decimal max_val)
 {
@@ -23,7 +23,7 @@ int main(int argc, const char* argv[])
 	/////////////////////////////////
 
 	std::string outfilename = "image.ppm";
-	std::string infilename = "../../scenes/refract_glass.scn";
+	std::string infilename = "../../scenes/combined.scn";
 
 	uint width = 640;
 	uint height = 480;

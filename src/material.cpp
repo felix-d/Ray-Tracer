@@ -149,27 +149,36 @@ vec3 MaterialCombined::shade(const Intersection* isect, uint8_t depth) const {
 	return glm::min(total_light, vec3(255.0f, 255.0f, 255.0f));
 }
 
-vec3 fresnel(const vec3& specularColor){
-	return specularColor;
+vec3 fresnel(const vec3& specularColor,double angle){
+	decimal Rr = specularColor.r + (1 - specularColor.r)*pow((1 - angle), 5);
+	decimal Rg = specularColor.g + (1 - specularColor.g)*pow((1 - angle), 5);
+	decimal Rb = specularColor.b + (1 - specularColor.b)*pow((1 - angle), 5);
+	vec3 k = specularColor;
+	return vec3(specularColor.r * Rr, specularColor.g*Rg,specularColor.b*Rb);
+
 }
 vec3 MaterialCombined::shadeLight(const Intersection* isect, const Light* l, uint8_t depth) const {
 	vec3 color;
 
-	vec3 fresnel_specular = fresnel(_specular);
+	vec3 fresnel_specular;
 	
 	if (l->directional()){
 		vec3 l_vec = -l->positionOrDirection;
 		double l_angle = max(glm::dot(l_vec, isect->normal), 0.0);
-		vec3 h_vec = (l_vec - isect->ray.direction) / glm::length(l_vec - isect->ray.direction);
+		vec3 h_vec = normalize(l_vec - isect->ray.direction);
 		double h_angle = max(glm::dot(h_vec, isect->normal), 0.0);
+		if(use_fresnel)fresnel_specular = fresnel(_specular, (dot(h_vec,isect->ray.direction)));
+		else fresnel_specular = _specular;
 		color = (_diffuse / glm::pi<double>() + fresnel_specular * ((_shininess + 2.0) / (8.0 * glm::pi<double>())) * pow(h_angle, _shininess)) * l_angle * l->color;
 	}
 	else {
 		vec3 l_vec = -glm::normalize(isect->position - l->positionOrDirection);
 		double l_angle = max(glm::dot(l_vec, isect->normal), 0.0);
-		vec3 h_vec = (l_vec - isect->ray.direction) / glm::length(l_vec - isect->ray.direction);
+		vec3 h_vec = normalize(l_vec - isect->ray.direction);
 		double h_angle = max(glm::dot(h_vec, isect->normal), 0.0);
 		double dist = glm::length(l->positionOrDirection - isect->position);
+		if (use_fresnel)fresnel_specular = fresnel(_specular, (dot(h_vec, isect->ray.direction)));
+		else fresnel_specular = _specular;
 		color = (_diffuse / glm::pi<double>() + fresnel_specular * ((_shininess + 2.0) / (8.0 * glm::pi<double>())) * pow(h_angle, _shininess)) * l_angle * l->color * glm::pi<double>() / pow(dist, 2.0);
 	}
 
@@ -197,6 +206,8 @@ vec3 MaterialReflective::shade(const Intersection* isect, uint8_t depth) const {
 
 vec3 MaterialRefractive::shade(const Intersection* isect, uint8_t depth) const {
 	depth++;
+
+	//early exit
 	if (depth >= isect->scene->maxDepth())return _color;
 
 	//initialization
@@ -207,26 +218,30 @@ vec3 MaterialRefractive::shade(const Intersection* isect, uint8_t depth) const {
 	vec3 d = isect->ray.direction;
 	decimal c;
 	bool inside;
-	bool reflected=false;
 
+	//reflexion ray
 	Ray reflectionRay = Ray{ isect->position + n*offset, reflect(d, n) };
 	std::unique_ptr<Intersection> reflectt = isect->scene->trace(reflectionRay, depth);
 	vec3 reflect_col = (reflectt != nullptr) ? reflectt->material->shade(reflectt.get(), depth) : _color;
 
-	//calculs
-	(dot(d, n) > 0) ? n = -n, inside = true, c=dot(d,n) : inside = false, c = dot(-d,n);
+	//calculs pour refraction
+	(dot(d, n) > 0) ? n = -n, inside = true, c=dot(d,n) : inside = false, c = -dot(d,n);
 	decimal eta = inside ? _index : 1.0 / _index;
 	refrdir = refract(d, n, eta);
-
+	
+	//refraction ray
 	Ray refractionRay = Ray{ isect->position - n*offset, refrdir };
 	std::unique_ptr<Intersection> refract = isect->scene->trace(refractionRay, depth);
 	vec3 refract_col = (refract != nullptr) ? refract->material->shade(refract.get(), depth) : reflect_col;
-	//vec3 refract_col = refract->material->shade(refract.get(), depth);
+
 	//Shlick
 	decimal R0 = pow((eta-1.0), 2.0) / pow((eta + 1), 2);
 	decimal R = R0 + (1 - R0)*pow((1 - c), 5);
 
 	color = (reflect_col *R+refract_col * (1-R)) * _color;
+	if (!use_fresnel){ 
+		return _color *refract_col;
+	}
 	return color;
 
 }

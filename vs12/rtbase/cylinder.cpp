@@ -91,9 +91,7 @@ vec3 Cylinder::calculateNormal(vec3& hitPoint, bool sides)const{
 	else if (!sides && hitPoint.y<_center.y)
 		normal = normalize(_q);
 	else {
-		vec3 direction = normalize(_p - _q);
-		vec3 x = _q + (dot((hitPoint - _q), direction)) * direction;
-		normal = normalize(hitPoint - x);
+		normal = normalize(vec3(hitPoint.x, 0.0, hitPoint.z));
 	}
 	return normal;
 }
