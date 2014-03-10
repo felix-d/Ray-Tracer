@@ -149,16 +149,20 @@ vec3 MaterialCombined::shade(const Intersection* isect, uint8_t depth) const {
 	return glm::min(total_light, vec3(255.0f, 255.0f, 255.0f));
 }
 
-
+vec3 fresnel(const vec3& specularColor){
+	return specularColor;
+}
 vec3 MaterialCombined::shadeLight(const Intersection* isect, const Light* l, uint8_t depth) const {
 	vec3 color;
 
+	vec3 fresnel_specular = fresnel(_specular);
+	
 	if (l->directional()){
 		vec3 l_vec = -l->positionOrDirection;
 		double l_angle = max(glm::dot(l_vec, isect->normal), 0.0);
 		vec3 h_vec = (l_vec - isect->ray.direction) / glm::length(l_vec - isect->ray.direction);
 		double h_angle = max(glm::dot(h_vec, isect->normal), 0.0);
-		color = (_diffuse / glm::pi<double>() + _specular * ((_shininess + 2.0) / (8.0 * glm::pi<double>())) * pow(h_angle, _shininess)) * l_angle * l->color;
+		color = (_diffuse / glm::pi<double>() + fresnel_specular * ((_shininess + 2.0) / (8.0 * glm::pi<double>())) * pow(h_angle, _shininess)) * l_angle * l->color;
 	}
 	else {
 		vec3 l_vec = -glm::normalize(isect->position - l->positionOrDirection);
@@ -166,7 +170,7 @@ vec3 MaterialCombined::shadeLight(const Intersection* isect, const Light* l, uin
 		vec3 h_vec = (l_vec - isect->ray.direction) / glm::length(l_vec - isect->ray.direction);
 		double h_angle = max(glm::dot(h_vec, isect->normal), 0.0);
 		double dist = glm::length(l->positionOrDirection - isect->position);
-		color = (_diffuse / glm::pi<double>() + _specular * ((_shininess + 2.0) / (8.0 * glm::pi<double>())) * pow(h_angle, _shininess)) * l_angle * l->color * glm::pi<double>() / pow(dist, 2.0);
+		color = (_diffuse / glm::pi<double>() + fresnel_specular * ((_shininess + 2.0) / (8.0 * glm::pi<double>())) * pow(h_angle, _shininess)) * l_angle * l->color * glm::pi<double>() / pow(dist, 2.0);
 	}
 
 	return color;
@@ -194,54 +198,36 @@ vec3 MaterialReflective::shade(const Intersection* isect, uint8_t depth) const {
 vec3 MaterialRefractive::shade(const Intersection* isect, uint8_t depth) const {
 	depth++;
 	if (depth >= isect->scene->maxDepth())return _color;
-	decimal innerRI;
-	decimal outerRI;
-	decimal bias = 1e-4;
-	vec3 i = isect->ray.direction;
+
+	//initialization
+	vec3 color;
+	vec3 refrdir;
+	decimal offset = 1e-4;
 	vec3 n = isect->normal;
-	vec3 color = vec3(0.0);
-	bool inside = false;
-	if (dot(i,n) > 0) n = -n, inside = true;
-	decimal ior = _index;
-	decimal eta;
-	if (inside){
-		eta = ior;
-		innerRI = _index;
-		outerRI = 1.0;
-	}
-	else{
-		eta = 1 / ior;
-		innerRI = 1.0;
-		outerRI = _index;
-	}
-	decimal refrValue = 0.0;
-	decimal reflValue = 1.0;
-	Ray ray;
-	
-	ray.origin = isect->position + n * bias;
-	decimal cos_phiI = dot(i, n);
-	decimal sin_phiT = sqrt(1.0 - eta*eta*(1.0 - cos_phiI*cos_phiI));
-	
-	//if (ray.direction == vec3(0.0)) ray.direction = reflect(i, n);
-	decimal cos_phiT = sqrt(1 - sin_phiT*sin_phiT);
-	decimal r_s_sqrt = (outerRI*cos_phiI - innerRI*cos_phiT) / (outerRI*cos_phiI + innerRI*cos_phiT);
-	decimal r_p_sqrt = (outerRI*cos_phiT - innerRI*cos_phiI) / (outerRI*cos_phiT + innerRI*cos_phiI);
-	reflValue = 0.5f + 0.5f* (r_s_sqrt*r_s_sqrt + r_p_sqrt*r_p_sqrt);
-	refrValue = 1.0f - reflValue;
+	vec3 d = isect->ray.direction;
+	decimal c;
+	bool inside;
+	bool reflected=false;
 
+	Ray reflectionRay = Ray{ isect->position + n*offset, reflect(d, n) };
+	std::unique_ptr<Intersection> reflectt = isect->scene->trace(reflectionRay, depth);
+	vec3 reflect_col = (reflectt != nullptr) ? reflectt->material->shade(reflectt.get(), depth) : _color;
 
-	ray.direction = refract(i, n, eta);
-	std::unique_ptr<Intersection> refraction = isect->scene->trace(ray, depth);
-	ray.direction = reflect(i,n);
-	std::unique_ptr<Intersection> reflection = isect->scene->trace(ray, depth);
+	//calculs
+	(dot(d, n) > 0) ? n = -n, inside = true, c=dot(d,n) : inside = false, c = dot(-d,n);
+	decimal eta = inside ? _index : 1.0 / _index;
+	refrdir = refract(d, n, eta);
 
-	if (refraction!=nullptr && reflection !=nullptr)
-	color = (reflection->material->shade(reflection.get(),depth) * reflValue +
-		refraction->material->shade(refraction.get(),depth) * refrValue) * _color;
-	else color = _color;
+	Ray refractionRay = Ray{ isect->position - n*offset, refrdir };
+	std::unique_ptr<Intersection> refract = isect->scene->trace(refractionRay, depth);
+	vec3 refract_col = (refract != nullptr) ? refract->material->shade(refract.get(), depth) : reflect_col;
+	//vec3 refract_col = refract->material->shade(refract.get(), depth);
+	//Shlick
+	decimal R0 = pow((eta-1.0), 2.0) / pow((eta + 1), 2);
+	decimal R = R0 + (1 - R0)*pow((1 - c), 5);
 
-
-
+	color = (reflect_col *R+refract_col * (1-R)) * _color;
 	return color;
 
 }
+
