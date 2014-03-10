@@ -191,15 +191,12 @@ vec3 MaterialReflective::shade(const Intersection* isect, uint8_t depth) const {
 	return color;
 }
 
-
 vec3 MaterialRefractive::shade(const Intersection* isect, uint8_t depth) const {
 	depth++;
 	if (depth >= isect->scene->maxDepth())return _color;
-	//early exit
-	const std::vector<std::unique_ptr<Light>>& lights = isect->scene->lights();
 	
 	//initialization
-	vec3 color = vec3(0.0);
+	vec3 color;
 	vec3 refrdir;
 	decimal offset = 1e-4;
 	vec3 n = isect->normal;
@@ -207,24 +204,18 @@ vec3 MaterialRefractive::shade(const Intersection* isect, uint8_t depth) const {
 	bool inside;
 	
 	//calculs
-	if (dot(d, n) > 0){
-		n = -n;
-		inside = true;
-	} 
-	else inside = false;
-	decimal eta = inside ? _index : 1 / _index;
-	decimal k = 1 - (pow(eta, 2)*(1 - pow((dot(d, n)), 2)));
-	if (k <= 0) refrdir = eta*( d - 2.0* n * dot(d, n)); //reflexion interne
-	else refrdir = (eta*(d - n*dot(d, n))) - n*sqrt(k);
-	refrdir = normalize(refrdir);
+	(dot(d, n) >= 0)?n = -n, inside = true : inside = false;
+	decimal eta = inside ? _index : 1.0/_index;
+	refrdir = refract(d, n, eta);
+	if (refrdir == vec3(0.0)) refrdir = reflect(d, n);
 	Ray refractionRay = Ray{ isect->position - n*offset, refrdir };
 	std::unique_ptr<Intersection> refract = isect->scene->trace(refractionRay, depth);
 
 	//attribution de la couleur
-	if (refract != nullptr)
+	if (refract != nullptr) 
 		color =refract->material->shade(refract.get(), depth) * _color;
-	else
-		color =_color;
+	else color =_color;
 
 	return color;
+
 }
