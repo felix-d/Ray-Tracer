@@ -194,27 +194,53 @@ vec3 MaterialReflective::shade(const Intersection* isect, uint8_t depth) const {
 vec3 MaterialRefractive::shade(const Intersection* isect, uint8_t depth) const {
 	depth++;
 	if (depth >= isect->scene->maxDepth())return _color;
-	
-	//initialization
-	vec3 color;
-	vec3 refrdir;
-	decimal offset = 1e-4;
+	decimal innerRI;
+	decimal outerRI;
+	decimal bias = 1e-4;
+	vec3 i = isect->ray.direction;
 	vec3 n = isect->normal;
-	vec3 d = isect->ray.direction;
-	bool inside;
+	vec3 color = vec3(0.0);
+	bool inside = false;
+	if (dot(i,n) > 0) n = -n, inside = true;
+	decimal ior = _index;
+	decimal eta;
+	if (inside){
+		eta = ior;
+		innerRI = _index;
+		outerRI = 1.0;
+	}
+	else{
+		eta = 1 / ior;
+		innerRI = 1.0;
+		outerRI = _index;
+	}
+	decimal refrValue = 0.0;
+	decimal reflValue = 1.0;
+	Ray ray;
 	
-	//calculs
-	(dot(d, n) >= 0)?n = -n, inside = true : inside = false;
-	decimal eta = inside ? _index : 1.0/_index;
-	refrdir = refract(d, n, eta);
-	if (refrdir == vec3(0.0)) refrdir = reflect(d, n);
-	Ray refractionRay = Ray{ isect->position - n*offset, refrdir };
-	std::unique_ptr<Intersection> refract = isect->scene->trace(refractionRay, depth);
+	ray.origin = isect->position + n * bias;
+	decimal cos_phiI = dot(i, n);
+	decimal sin_phiT = sqrt(1.0 - eta*eta*(1.0 - cos_phiI*cos_phiI));
+	
+	//if (ray.direction == vec3(0.0)) ray.direction = reflect(i, n);
+	decimal cos_phiT = sqrt(1 - sin_phiT*sin_phiT);
+	decimal r_s_sqrt = (outerRI*cos_phiI - innerRI*cos_phiT) / (outerRI*cos_phiI + innerRI*cos_phiT);
+	decimal r_p_sqrt = (outerRI*cos_phiT - innerRI*cos_phiI) / (outerRI*cos_phiT + innerRI*cos_phiI);
+	reflValue = 0.5f + 0.5f* (r_s_sqrt*r_s_sqrt + r_p_sqrt*r_p_sqrt);
+	refrValue = 1.0f - reflValue;
 
-	//attribution de la couleur
-	if (refract != nullptr) 
-		color =refract->material->shade(refract.get(), depth) * _color;
-	else color =_color;
+
+	ray.direction = refract(i, n, eta);
+	std::unique_ptr<Intersection> refraction = isect->scene->trace(ray, depth);
+	ray.direction = reflect(i,n);
+	std::unique_ptr<Intersection> reflection = isect->scene->trace(ray, depth);
+
+	if (refraction!=nullptr && reflection !=nullptr)
+	color = (reflection->material->shade(reflection.get(),depth) * reflValue +
+		refraction->material->shade(refraction.get(),depth) * refrValue) * _color;
+	else color = _color;
+
+
 
 	return color;
 
