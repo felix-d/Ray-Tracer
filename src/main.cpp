@@ -6,7 +6,8 @@
 #include <scene.h>
 #include <material.h>
 
-bool use_fresnel = true;
+bool use_fresnel = false;
+bool use_jittered_ss = true;
 
 inline int discrete(decimal v, decimal max_val)
 {
@@ -23,12 +24,12 @@ int main(int argc, const char* argv[])
 	/////////////////////////////////
 
 	std::string outfilename = "image.ppm";
-	std::string infilename = "../../scenes/combined.scn";
+	std::string infilename = "../../scenes/refract_glass.scn";
 
 	uint width = 640;
 	uint height = 480;
-	uint samples = 1;
-    
+	uint samples = 2;
+	srand(time(NULL)); //pour le jittering supersampling...why not
 	// Simple tokenization scheme
 	{
 		bool in_defined = false, out_defined = false;
@@ -138,10 +139,13 @@ int main(int argc, const char* argv[])
 
 std::vector<vec3> superSampling(const uint& samples, const uint& x_pixel, const uint& y_pixel, 
 	const Scene& scene, const decimal& width, const decimal& height) {
+
+	
 	decimal aspectratio = (decimal)width / (decimal)height;
 	decimal angle = tan(scene.fov()/(2*aspectratio));
 	decimal invWidth = 1 / (decimal)width, invHeight = 1 / (decimal)height;
-	
+	decimal jitterX = 0;
+	decimal jitterY = 0;
 	std::vector<vec3> points;
 	std::vector<decimal>xxs, yys;
 	float samples2 = pow(samples, 2);
@@ -150,8 +154,14 @@ std::vector<vec3> superSampling(const uint& samples, const uint& x_pixel, const 
 		if (k != 0)
 			indice = (k*samples + (k + 1)*samples) / (2 * samples2);
 		else indice = samples / (2 * samples2);
-		xxs.push_back((2 * ((x_pixel + indice) * invWidth) - 1) * angle * aspectratio);
-		yys.push_back((1 - 2 * ((y_pixel + indice) * invHeight)) * angle);
+		if (use_jittered_ss){
+			jitterX = samples *100 / (2 * samples2);
+			jitterX = (-jitterX + rand() % (int)(2 * jitterX + 1)) / 100.0;
+			jitterY = samples * 100 / (2 * samples2);
+			jitterY = (-jitterY + rand() % (int)(2 * jitterY + 1)) / 100.0;
+		}
+		xxs.push_back((2 * ((x_pixel + indice+jitterX) * invWidth) - 1) * angle * aspectratio);
+		yys.push_back((1 - 2 * ((y_pixel + indice+jitterY) * invHeight)) * angle);
 	}
 	for (uint k = 0; k < xxs.size(); k++){
 		for (uint h = 0; h < yys.size(); h++){
