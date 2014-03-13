@@ -49,7 +49,7 @@ vec3 Material::shadeLight(const Intersection* isect, const Light* l, uint8_t dep
     //coefficient de reflexion de la lumiere
 	vec3 color;
 	if (_texture != nullptr){
-		color = _texture->sample(vec2(_texture->width() * u, _texture->height()*v));
+		color = _texture->sample(vec2(_texture->width() * _tiling.x * u, _texture->height() * _tiling.y * v));
 	}
 	else{
 		if ((int)(floorf(scale * _tiling.x * u) + floorf(scale * _tiling.y * v)) % 2 == 1){
