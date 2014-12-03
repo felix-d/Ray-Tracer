@@ -69,3 +69,10 @@ packages/
 #Test files
 *.testsettings
 
+qt/
+include/
+vs12/
+scenes/
+TODO.txt
+Real-Time\ Collision\ Detection.pdf
+
